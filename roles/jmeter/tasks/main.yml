@@ -1,0 +1,62 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for jmeter
+
+# - name: create jmeter directory
+#   become: true
+#   file:
+#     path: "{{ jmeter_home }}"
+#     state: directory
+#     owner: "{{ jmeter_user }}"
+#     group: "{{ jmeter_group }}"
+#     mode: '0755'
+
+# - name: download jmeter
+#   become: true
+#   get_url:
+#     url: "https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-{{ jmeter_version }}.tgz"
+#     dest: "/tmp/apache-jmeter-{{ jmeter_version }}.tgz"
+#     mode: '0644'
+
+# - name: extract jmeter
+#   become: true
+#   unarchive:
+#     src: "/tmp/apache-jmeter-{{ jmeter_version }}.tgz"
+#     dest: "{{ jmeter_home }}"
+#     remote_src: yes
+#     owner: "{{ jmeter_user }}"
+#     group: "{{ jmeter_group }}"
+#     extra_opts:
+#       - --strip-components=1
+#     creates: "{{ jmeter_home }}/bin/jmeter"
+
+# - name: create jmeter symlink
+#   become: true
+#   file:
+#     src: "{{ jmeter_home }}/bin/jmeter"
+#     dest: "/usr/local/bin/jmeter"
+#     state: link
+
+# - name: cleanup jmeter download
+#   become: true
+#   file:
+#     path: "/tmp/apache-jmeter-{{ jmeter_version }}.tgz"
+#     state: absent
+
+- name: deploy start script
+  become: true
+  template:
+    src: start.sh.j2
+    dest: "{{ jmeter_home }}/start.sh"
+    owner: "{{ jmeter_user }}"
+    group: "{{ jmeter_group }}"
+    mode: '0755'
+
+- name: deploy stop script
+  become: true
+  template:
+    src: stop.sh
+    dest: "{{ jmeter_home }}/stop.sh"
+    owner: "{{ jmeter_user }}"
+    group: "{{ jmeter_group }}"
+    mode: '0755'

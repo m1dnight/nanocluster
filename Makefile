@@ -12,8 +12,6 @@ tags:="all"
 edit_vault:
 	ansible-vault edit $(VAULT) --vault-password-file=$(VAULT_PASSFILE)
 
-
-
 #----------------------------------------------------------------------------
 # Misc
 

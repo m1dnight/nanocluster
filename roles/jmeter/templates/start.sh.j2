@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# get the local ip address
+IP="{{ ansible_default_ipv4.address }}"
+
+# run jmeter client in background
+nohup jmeter -s -J server.rmi.ssl.disable=true -Djava.rmi.server.hostname="${IP}" -J server.rmi.localport=1099 >> /var/log/jmeter.log &
+disown
+echo "done"

@@ -17,6 +17,8 @@ packages:
   - tree
   - git
   - tmux
+  # jmeter
+  - openjdk-17-jre
 
 #----------------------------------------------------------------------------
 # role: prometheus
