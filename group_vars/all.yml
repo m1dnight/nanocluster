@@ -1,0 +1,11 @@
+#SPDX-License-Identifier: MIT-0
+---
+# pip_package: python3-pip
+# pip_executable: pip3
+# pip_install_packages:
+#   - cython
+#   - pyyaml
+docker_install_compose: false
+docker_install_recommends: true
+docker_users:
+  - "{{ ansible_user }}"

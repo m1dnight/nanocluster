@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+---
+packages:
+  - emacs-nox
+  - htop
+  - tree
+  - git
+  - tmux

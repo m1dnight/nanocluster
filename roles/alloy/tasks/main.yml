@@ -1,0 +1,38 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: add grafana key
+  become: true
+  ansible.builtin.apt_key:
+    url: https://apt.grafana.com/gpg.key
+    keyring: /usr/share/keyrings/grafana.gpg
+
+- name: add grafana repo
+  become: true
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main
+    state: present
+
+- name: install grafana packages
+  become: true
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+    update_cache: true
+  with_items:
+    - alloy
+
+- name: run alloy as root
+  become: true
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/alloy.service
+    regexp: '^User=alloy'
+    line: User=root
+
+- name: install alloy config
+  become: true
+  template:
+    src: alloy.j2
+    dest: /etc/alloy/config.alloy
+  notify:
+    - restart alloy
+  tags: alloy

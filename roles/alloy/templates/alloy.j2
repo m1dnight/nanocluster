@@ -1,0 +1,26 @@
+local.file_match "log_files" {
+	path_targets = [{"__path__" = "/var/log/*.log"}]
+	sync_period  = "1s"
+}
+
+loki.source.file "scrape_log_files" {
+	targets       = local.file_match.log_files.targets
+	forward_to    = [loki.process.default.receiver]
+	tail_from_end = true
+}
+
+loki.process "default" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.static_labels {
+		values = {
+			host = "{{ ansible_fqdn }}",
+		}
+	}
+}
+
+loki.write "default" {
+	endpoint {
+		url = "{{ loki_endpoint }}"
+	}
+}

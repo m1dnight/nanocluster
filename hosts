@@ -1,0 +1,5 @@
+[nanocluster]
+robert.localdomain ansible_user=pi
+mike.localdomain ansible_user=pi
+jose.localdomain ansible_user=pi
+joe.localdomain ansible_user=pi

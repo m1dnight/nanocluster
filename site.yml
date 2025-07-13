@@ -1,0 +1,38 @@
+- hosts: all
+  no_log: false
+  tasks:
+    - debug: var=ansible_all_ipv4_addresses
+    - debug: var=ansible_default_ipv4.address
+    - debug: var=ansible_host
+    - debug: var=ansible_fqdn
+  roles:
+    - role: common
+      tags: [common]
+    - role: geerlingguy.pip
+      become: true
+    - role: geerlingguy.docker_arm
+      become: true
+    - role: alloy
+      tags: [alloy]
+    - role: prometheus.prometheus.prometheus
+      tags: [prometheus]
+
+
+- hosts: leader
+  no_log: false
+  tasks:
+    - debug: var=ansible_all_ipv4_addresses
+    - debug: var=ansible_default_ipv4.address
+    - debug: var=ansible_host
+    - debug: var=ansible_fqdn
+  roles: []
+
+
+- hosts: nanocluster
+  no_log: false
+  tasks:
+    - debug: var=ansible_all_ipv4_addresses
+    - debug: var=ansible_default_ipv4.address
+    - debug: var=ansible_host
+    - debug: var=ansible_fqdn
+  roles: []
