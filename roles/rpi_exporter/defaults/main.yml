@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for rpi_exporter
+rpi_exporter_version: 0.6.0
+rpi_exporter_web_listen_address: "0.0.0.0:9243"
+
+rpi_exporter_system_group: "rpi-exporter"
+rpi_exporter_system_user: "{{ rpi_exporter_system_group }}"

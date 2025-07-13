@@ -15,6 +15,7 @@ loki.process "default" {
 	stage.static_labels {
 		values = {
 			host = "{{ ansible_fqdn }}",
+      group = "nanocluster"
 		}
 	}
 }

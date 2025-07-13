@@ -1,3 +1,4 @@
 # Install a role from the Ansible Galaxy
 - src: geerlingguy.docker_arm
 - src: geerlingguy.pip
+- src: paulfantom.rpi_exporter

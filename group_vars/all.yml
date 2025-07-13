@@ -1,11 +1,54 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# pip_package: python3-pip
-# pip_executable: pip3
-# pip_install_packages:
-#   - cython
-#   - pyyaml
+#----------------------------------------------------------------------------
+# geerlingguy.docker_arm
+
 docker_install_compose: false
 docker_install_recommends: true
 docker_users:
   - "{{ ansible_user }}"
+
+#----------------------------------------------------------------------------
+# common
+
+packages:
+  - emacs-nox
+  - htop
+  - tree
+  - git
+  - tmux
+
+#----------------------------------------------------------------------------
+# role: prometheus
+
+prometheus_scrape_configs:
+  - job_name: docker
+    static_configs:
+      - targets: ["localhost:9323"]
+        labels:
+          host: "{{ ansible_fqdn }}"
+          instance: "{{ ansible_fqdn }}"
+          group: "nanocluster"
+
+  - job_name: node
+    static_configs:
+      - targets: ["localhost:9100"]
+        labels:
+          host: "{{ ansible_fqdn }}"
+          instance: "{{ ansible_fqdn }}"
+          group: "nanocluster"
+
+  - job_name: rpi
+    static_configs:
+      - targets: ["localhost:9243"]
+        labels:
+          host: "{{ ansible_fqdn }}"
+          instance: "{{ ansible_fqdn }}"
+          group: "nanocluster"
+
+prometheus_remote_write:
+  - url: "{{ mimir_endpoint }}"
+
+prometheus_external_labels:
+  environment: "{{ ansible_fqdn | default(ansible_host) | default(inventory_hostname) }}"
+  hostname: "{{ ansible_fqdn }}"

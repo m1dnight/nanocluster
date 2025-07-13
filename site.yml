@@ -16,7 +16,10 @@
       tags: [alloy]
     - role: prometheus.prometheus.prometheus
       tags: [prometheus]
-
+    - role: prometheus.prometheus.node_exporter
+      tags: [node_exporter]
+    - role: rpi_exporter
+      tags: [rpi_exporter]
 
 - hosts: leader
   no_log: false
