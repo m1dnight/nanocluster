@@ -47,3 +47,20 @@
   become: true
   command: localectl set-locale LANG={{ config_system_locale }} LANGUAGE={{ config_system_language }}
   changed_when: locale_lang != config_system_locale or locale_language != config_system_language
+
+#---------------------------------------------------------------------------
+# Sync files
+
+- name: create sync directory
+  file:
+    path: "{{ ansible_env.HOME }}/sync"
+    state: directory
+    mode: '0755'
+
+- name: sync files to home directory
+  synchronize:
+    src: "{{ playbook_dir }}/sync/"
+    dest: "{{ ansible_env.HOME }}/sync/"
+    # delete: yes
+    recursive: yes
+  tags: sync
