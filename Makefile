@@ -32,6 +32,9 @@ reboot:
 
 ping:
 	ansible all -i hosts -m ping
+
+cmd:
+	ansible -i hosts all -a "$(cmd)"
 # make pirate extra:="--extra-vars jackett_backup=/tmp/jackett.tar.gz --extra-vars sonarr_backup=/tmp/sonarr.tar.gz --extra-vars bazarr_backup=/tmp/bazarr.tar.gz --extra-vars radarr_backup=/tmp/radarr.tar.gz"
 $(STANDARD_SERVICES):
 	$(ANSIBLE) --limit $@ --tags=$(tags)

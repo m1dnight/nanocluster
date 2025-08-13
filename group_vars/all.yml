@@ -17,6 +17,9 @@ packages:
   - tree
   - git
   - tmux
+  - autoconf
+  - libssl-dev
+  - libncurses-dev
   # jmeter
   - openjdk-17-jre
 
