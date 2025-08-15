@@ -5,6 +5,7 @@
     - debug: var=ansible_default_ipv4.address
     - debug: var=ansible_host
     - debug: var=ansible_fqdn
+    - debug: var=inventory_hostname_short
   roles:
     - role: common
       tags: [common]
@@ -22,5 +23,5 @@
       tags: [rpi_exporter]
     - role: asdf
       tags: [asdf]
-  #.  - role: jmeter
-  #.    tags: [jmeter]
+    # - role: jmeter
+    #   tags: [jmeter]

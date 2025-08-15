@@ -1,3 +1,6 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # defaults file for asdf
+elixir_version: '1.17'
+erlang_version: '27.0'
+python_version: '3.10.0'

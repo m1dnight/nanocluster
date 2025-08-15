@@ -1,6 +1,6 @@
 #SPDX-License-Identifier: MIT-0
 ---
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Install basic packages
 
 - name: install aptitude
@@ -17,6 +17,49 @@
     state: latest
     update_cache: true
   with_items: "{{ packages }}"
+
+#---------------------------------------------------------------------------
+# Hostname
+
+- name: add local hostname {{ ansible_host }} to /etc/hosts
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1       {{ ansible_host }} {{ inventory_hostname_short }}"
+
+# - name: remove all old hosts
+#   become: true
+#   ansible.builtin.lineinfile:
+#     path: /etc/hosts
+#     regexp: '^127\.0\.1\.1'
+#     state: absent
+
+# - name: Create a simple text file
+#   become: true
+#   copy:
+#     dest: /etc/hosts
+#     content: |
+#       127.0.0.1       localhost
+#       ::1             localhost ip6-localhost ip6-loopback
+#       ff02::1         ip6-allnodes
+#       ff02::2         ip6-allrouters
+
+#       127.0.1.1       {{ inventory_hostname_short }}
+
+# - name: Replace old hostname with new hostname (requires Ansible >= 2.4)
+#   ansible.builtin.replace:
+#     path: /etc/hosts
+#     regexp: '^127\.0\.0\.1'
+#     replace: "127.0.1.1      dfdf   {{ ansible_host }} {{ inventory_hostname_short }}"
+
+- name: replace old hostname with new hostname in /etc/hostname
+  become: true
+  ansible.builtin.lineinfile:
+    dest: /etc/hostname
+    line: "{{ ansible_host }}"
+    regexp: ".*"
+    create: no
 
 #---------------------------------------------------------------------------
 # Locale
