@@ -1,11 +1,12 @@
-- hosts: all
+- name: Maintenance
+  hosts: all
   no_log: false
   tasks:
-    - debug: var=ansible_all_ipv4_addresses
-    - debug: var=ansible_default_ipv4.address
-    - debug: var=ansible_host
-    - debug: var=ansible_fqdn
-    - debug: var=inventory_hostname_short
+    - ansible.builtin.debug: var=ansible_all_ipv4_addresses
+    - ansible.builtin.debug: var=ansible_default_ipv4.address
+    - ansible.builtin.debug: var=ansible_host
+    - ansible.builtin.debug: var=ansible_fqdn
+    - ansible.builtin.debug: var=inventory_hostname_short
   roles:
     - role: common
       tags: [common]
@@ -23,5 +24,3 @@
       tags: [rpi_exporter]
     - role: asdf
       tags: [asdf]
-    # - role: jmeter
-    #   tags: [jmeter]
