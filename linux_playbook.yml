@@ -1,12 +1,17 @@
 ---
 - name: Update nodes
-  hosts: nodes
-  become: true
+  hosts: all
+  vars:
+    go_version: "1.25.5"
+    go_platform: linux
+    go_arch: arm64
+    go_checksum: "b00b694903d126c588c378e72d3545549935d3982635ba3f7a964c9fa23fe3b9"
+    go_root: "/opt/go/"
+  # necessary for the ASDF role
+  environment:
+    GOROOT: /usr/local/go
+    PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
   roles:
     - role: m1dnight.nanocluster.packages
-
-  tasks:
-    - name: Debug username
-      ansible.builtin.command:
-        cmd: "whoami"
-      changed_when: false
+      become: true
+    - role: m1dnight.nanocluster.asdf

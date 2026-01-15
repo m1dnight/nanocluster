@@ -1,0 +1,56 @@
+---
+# tasks file for m1dnight.nanocluster.asdf
+
+- name: Remove asdf entirely
+  ansible.builtin.file:
+    path: "{{ asdf_directory }}"
+    state: absent
+  when: asdf_cleanup
+
+- name: Clone ASDF
+  ansible.builtin.git:
+    repo: "https://github.com/asdf-vm/asdf.git"
+    dest: "{{ asdf_directory }}"
+    version: "{{ asdf_version }}"
+
+- name: Build ASDF
+  ansible.builtin.shell:
+    cmd: "make"
+    executable: /bin/bash
+    chdir: "{{ asdf_directory }}"
+  changed_when: true
+
+
+- name: Add asdf to to system-wide $PATH.
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/profile.d/asdf-path.sh
+    mode: "0555"
+    content: |-
+      export PATH=$PATH:{{ asdf_directory }}/
+      export PATH=$PATH:{{ asdf_directory }}/shims/
+
+- name: Install ASDF plugins
+  environment:
+    PATH: "{{ asdf_directory }}/:{{ ansible_env.PATH }}"
+  ansible.builtin.command:
+    cmd: "asdf plugin add {{ item.name }} {{ item.repository }}"
+  register: asdf_plugin_output
+  loop: "{{ asdf_plugins }}"
+  changed_when: true
+
+- name: Install ASDF plugin versions
+  environment:
+    PATH: "{{ asdf_directory }}/:{{ ansible_env.PATH }}"
+  ansible.builtin.command:
+    cmd: "asdf install {{ item.name }} {{ item.version }}"
+  loop: "{{ asdf_plugins }}"
+  changed_when: true
+
+- name: Set plugin global versions
+  environment:
+    PATH: "{{ asdf_directory }}:{{ ansible_env.PATH }}"
+  ansible.builtin.command:
+    cmd: "asdf set -u {{ item.name }} {{ item.version }}"
+  loop: "{{ asdf_plugins }}"
+  changed_when: true

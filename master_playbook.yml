@@ -1,6 +1,6 @@
 ---
 - name: Install fan controller
-  hosts: nodes
+  hosts: main
   become: true
   roles:
     - role: m1dnight.nanocluster.fan_controller

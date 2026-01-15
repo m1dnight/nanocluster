@@ -1,3 +1,7 @@
 ---
 ansible_user: your_username
 ansible_ssh_private_key_file: /path/to/your/private/key
+
+k3s_version: v1.31.12+k3s1
+token: "changeme!"
+api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
