@@ -1,26 +1,5 @@
-- name: Maintenance
-  hosts: all
-  no_log: false
-  tasks:
-    - ansible.builtin.debug: var=ansible_all_ipv4_addresses
-    - ansible.builtin.debug: var=ansible_default_ipv4.address
-    - ansible.builtin.debug: var=ansible_host
-    - ansible.builtin.debug: var=ansible_fqdn
-    - ansible.builtin.debug: var=inventory_hostname_short
+---
+- name: Example playbook
+  hosts: localhost
   roles:
-    - role: common
-      tags: [common]
-    - role: geerlingguy.pip
-      become: true
-    - role: geerlingguy.docker_arm
-      become: true
-    - role: alloy
-      tags: [alloy]
-    - role: prometheus.prometheus.prometheus
-      tags: [prometheus]
-    - role: prometheus.prometheus.node_exporter
-      tags: [node_exporter]
-    - role: rpi_exporter
-      tags: [rpi_exporter]
-    - role: asdf
-      tags: [asdf]
+    - role: m1dnight.nanocluster.run

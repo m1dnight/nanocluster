@@ -1,0 +1,6 @@
+---
+# handlers file for m1dnight.nanocluster.fan_controller
+- name: Restart fan-control
+  ansible.builtin.systemd:
+    name: fan-control
+    state: restarted

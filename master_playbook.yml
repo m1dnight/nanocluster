@@ -1,0 +1,13 @@
+---
+- name: Install fan controller
+  hosts: nodes
+  become: true
+  roles:
+    - role: m1dnight.nanocluster.fan_controller
+      become: true
+
+  tasks:
+    - name: Debug username
+      ansible.builtin.command:
+        cmd: "whoami"
+      changed_when: false

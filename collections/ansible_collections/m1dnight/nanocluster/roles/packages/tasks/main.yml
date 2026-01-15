@@ -1,0 +1,26 @@
+---
+# tasks file for m1dnight.nanocluster.packages
+
+# task example for debugging a value
+- name: Install packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ packages_add_list }}"
+
+- name: Remove packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ packages_remove_list }}"
+
+- name: Remove dependencies that are no longer required
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+  when: packages_autoremove
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+  when: packages_upgrade

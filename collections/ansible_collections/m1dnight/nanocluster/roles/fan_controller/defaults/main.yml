@@ -1,0 +1,8 @@
+---
+# defaults file for m1dnight.nanocluster.fan_controller
+
+fan_controller_path: /opt
+
+fan_controller_script_name: fan.py
+
+fan_controller_speed: 10.0

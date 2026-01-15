@@ -1,0 +1,11 @@
+[Unit]
+Description=Fan PWM Control
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 {{ fan_controller_path }}/{{ fan_controller_script_name }} {{ fan_controller_speed }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+---
+- name: Update nodes
+  hosts: nodes
+  become: true
+  roles:
+    - role: m1dnight.nanocluster.packages
+
+  tasks:
+    - name: Debug username
+      ansible.builtin.command:
+        cmd: "whoami"
+      changed_when: false

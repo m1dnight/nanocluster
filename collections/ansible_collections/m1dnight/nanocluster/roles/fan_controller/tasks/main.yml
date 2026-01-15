@@ -1,0 +1,33 @@
+---
+# tasks file for m1dnight.nanocluster.fan_controller
+
+# task example for debugging a value
+- name: Create fan control directory
+  ansible.builtin.file:
+    path: "{{ fan_controller_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy fan control script
+  ansible.builtin.copy:
+    dest: "{{ fan_controller_path }}/{{ fan_controller_script_name }}"
+    mode: '0755'
+    src: fan.py
+
+- name: Create systemd service file
+  ansible.builtin.template:
+    dest: /etc/systemd/system/fan-control.service
+    src: systemd.service
+    mode: '0755'
+  notify: Restart fan-control
+
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start fan-control service
+  ansible.builtin.systemd:
+    name: fan-control
+    enabled: true
+    state: started

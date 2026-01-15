@@ -1,0 +1,13 @@
+---
+# defaults file for m1dnight.nanocluster.packages
+# packages to install
+packages_add_list: []
+
+# packages to remove
+packages_remove_list: []
+
+# run apt-get dist-upgrade
+packages_upgrade: true
+
+# run apt-get autoremove --purge
+packages_autoremove: true

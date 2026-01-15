@@ -1,29 +1,49 @@
+# M1dnight Nanocluster Ansible Project
 
-# JMeter
+## Included content/ Directory Structure
 
-Jmeter is installed on all the nodes. Start it locally with
-`/opt/jmeter/start.sh` and stop it again with `/opt/jmeter/stop.sh`
+The directory structure follows best practices recommended by the Ansible
+community. Feel free to customize this template according to your specific
+project requirements.
 
-For testing, run an nginx or something on your machine
-```shell
-docker run -it --rm -p 80:80 nginx
+```
+ ansible-project/
+ |── .devcontainer/
+ |    └── docker/
+ |        └── devcontainer.json
+ |    └── podman/
+ |        └── devcontainer.json
+ |    └── devcontainer.json
+ |── .github/
+ |    └── workflows/
+ |        └── tests.yml
+ |    └── ansible-code-bot.yml
+ |── .vscode/
+ |    └── extensions.json
+ |── collections/
+ |   └── requirements.yml
+ |   └── ansible_collections/
+ |       └── project_org/
+ |           └── project_repo/
+ |               └── README.md
+ |               └── roles/sample_role/
+ |                         └── README.md
+ |                         └── tasks/main.yml
+ |── inventory/
+ |   |── hosts.yml
+ |   |── argspec_validation_inventory.yml
+ |   └── groups_vars/
+ |   └── host_vars/
+ |── ansible-navigator.yml
+ |── ansible.cfg
+ |── devfile.yaml
+ |── linux_playbook.yml
+ |── network_playbook.yml
+ |── README.md
+ |── site.yml
 ```
 
-To start all the machines
+## Compatible with Ansible-lint
 
-```shell
-ansible -i hosts all -a "/opt/jmeter/start.sh" --become
-```
-
-To stop all the machines
-
-```shell
-ansible -i hosts all -a "/opt/jmeter/stop.sh" --become
-```
-
-
-On your machine, start the JMeter client with
-
-```shell
-jmeter -t roles/jmeter/files/CallCC.jmx -Djava.rmi.server.hostname="<client ip>" -J server.rmi.ssl.disable=true
-```
+Tested with ansible-lint >=24.2.0 releases and the current development version
+of ansible-core.

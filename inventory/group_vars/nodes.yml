@@ -1,0 +1,8 @@
+packages_add_list:
+  - git
+  - tmux
+  - emacs-nox
+  - nfs-client
+  - tree
+  - ncdu
+  - net-tools
