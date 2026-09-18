@@ -19,3 +19,7 @@ fan_speed *args:
 # Add the configured SSH public key to selected accounts on all active nodes.
 ssh_keys *args:
     ansible-playbook pb_ssh_keys.yml "$@"
+
+# Write the shared Erlang cookie to the configured user's home on every node.
+erlang_cookie *args:
+    ansible-playbook pb_erlang_cookie.yml "$@"

@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: Write the shared Erlang cookie for an existing account
+    options:
+      erlang_cookie_user:
+        type: str
+        description: Existing account whose home should contain the cookie.
+      erlang_cookie_value:
+        type: str
+        required: true
+        description: Shared cookie containing 1-255 printable ASCII characters without whitespace.

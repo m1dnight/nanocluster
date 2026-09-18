@@ -1,0 +1,24 @@
+---
+- name: Validate the shared cookie
+  ansible.builtin.assert:
+    that:
+      - "erlang_cookie_value is match('^[!-~]{1,255}\\Z')"
+    fail_msg: The Erlang cookie must contain 1-255 printable ASCII characters without whitespace.
+  no_log: true
+
+- name: Look up the account's home and primary group
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ erlang_cookie_user }}"
+    fail_key: true
+  register: erlang_cookie_account
+
+- name: Write the shared Erlang cookie
+  ansible.builtin.copy:
+    dest: "{{ erlang_cookie_account.ansible_facts.getent_passwd[erlang_cookie_user][4] }}/.erlang.cookie"
+    content: "{{ erlang_cookie_value }}\n"
+    owner: "{{ erlang_cookie_user }}"
+    group: "{{ erlang_cookie_account.ansible_facts.getent_passwd[erlang_cookie_user][2] }}"
+    mode: "0400"
+  no_log: true
+  diff: false

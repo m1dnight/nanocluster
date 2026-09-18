@@ -32,6 +32,7 @@ requirements.yml
 pb_setup.yml
 pb_fan_speed.yml
 pb_ssh_keys.yml
+pb_erlang_cookie.yml
 inventory/
   hosts.yml
   group_vars/
@@ -44,6 +45,7 @@ roles/
   asdf/
   fan_controller/
   ssh_keys/
+  erlang_cookie/
 tests/
 .github/workflows/
 ```
@@ -61,6 +63,7 @@ installed by `just deps`.
 | `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale and installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 | `just ssh_keys` | `pb_ssh_keys.yml` | Pis 1–6 | Adds a configured public SSH key to selected existing accounts. |
+| `just erlang_cookie` | `pb_erlang_cookie.yml` | Pis 1–6 | Writes the same Erlang cookie to the selected account's home. |
 
 `just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -117,6 +120,27 @@ just fan_speed -e fan_controller_speed=50
 For a persistent setting, edit `inventory/group_vars/fan_controller.yml` and set
 `fan_controller_speed: 50`. Pin, frequency, and dependency packages are configurable
 as well; see the fan role README. Extra vars apply only to that invocation.
+
+## Shared Erlang cookie
+
+Set `erlang_cookie_value` in `inventory/group_vars/all.yml`, then run:
+
+```sh
+just erlang_cookie
+```
+
+This writes the same value to `/home/pi/.erlang.cookie` on all active nodes,
+owned by `pi` with mode `0400` (owner read only). Task output and diffs hide the
+cookie. Repeated runs reuse the configured value; changing it replaces the file.
+This is a separate playbook; run it after setup.
+
+`erlang_cookie_user` defaults to the SSH user (`pi`) and can target another
+existing account. To keep the cookie out of tracked inventory, remove its inline
+value and supply `erlang_cookie_value` through an Ansible Vault vars file:
+`just erlang_cookie -e @cookie.vault --ask-vault-pass`.
+
+Restart any running Erlang/Elixir nodes after changing their cookie; the role
+only writes the file. See [Erlang's authentication documentation](https://www.erlang.org/doc/system/distributed.html#security).
 
 ## SSH key access
 
@@ -180,13 +204,16 @@ ansible-inventory --graph
 just setup --syntax-check
 just fan_speed --syntax-check
 just ssh_keys --syntax-check
+just erlang_cookie --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline
 python3 -m unittest discover -s tests -v
 ```
 
-The tests use simulated GPIO and a fake asdf executable in a temporary directory.
+The tests use simulated GPIO, a fake asdf executable, and temporary user homes.
 They cover fan argument validation and cleanup, and actual Ansible plugin tasks
 for installation, repeat runs, version changes, and preserving unrelated tools.
+Cookie tests cover shared values, ownership and permissions, repeat runs,
+rotation, invalid values, and hidden output even with `--diff`.
 They do not validate physical wiring or OS package availability on the Pis.
