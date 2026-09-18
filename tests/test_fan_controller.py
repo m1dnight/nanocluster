@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / (
-    "collections/ansible_collections/m1dnight/nanocluster/roles/fan_controller/files/fan.py"
+    "roles/fan_controller/files/fan.py"
 )
 spec = importlib.util.spec_from_file_location("fan", SCRIPT)
 fan = importlib.util.module_from_spec(spec)

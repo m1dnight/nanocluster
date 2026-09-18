@@ -12,7 +12,7 @@ import unittest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-TASKS = ROOT / "collections/ansible_collections/m1dnight/nanocluster/roles/asdf/tasks/plugin.yml"
+TASKS = ROOT / "roles/asdf/tasks/plugin.yml"
 FAKE_ASDF = '''
 import json
 import os

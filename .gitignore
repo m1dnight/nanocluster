@@ -6,15 +6,6 @@
 *.vault
 .env
 
-# Downloaded collections; keep this project's collection and requirements
-collections/*
-!collections/ansible_collections
-!collections/requirements.yml
-collections/ansible_collections/*
-!collections/ansible_collections/m1dnight
-collections/ansible_collections/m1dnight/*
-!collections/ansible_collections/m1dnight/nanocluster
-
 # Python environments, bytecode, and test caches
 .venv/
 venv/

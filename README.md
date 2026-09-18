@@ -23,12 +23,39 @@ SSH credentials come from your SSH configuration/agent. Use `--private-key`
 for an explicit key and `--ask-become-pass` if sudo requires a password.
 No private key path is committed here.
 
+## Repository layout
+
+```text
+ansible.cfg
+justfile
+requirements.yml
+pb_setup.yml
+pb_fan_speed.yml
+inventory/
+  hosts.yml
+  group_vars/
+    all.yml
+    nodes.yml
+    fan_controller.yml
+roles/
+  packages/
+  asdf/
+  fan_controller/
+tests/
+.github/workflows/
+```
+
+Playbooks select hosts and roles. Local roles contain the implementation and
+defaults; inventory group variables hold the cluster's package lists, toolchain
+versions, and fan settings. Ansible discovers `roles/` beside the playbooks.
+`requirements.yml` pins the external Go role installed by `just deps`.
+
 ## Playbooks
 
 | Command | Playbook | Hosts | Behavior |
 | --- | --- | --- | --- |
-| `just setup` | `setup.yml` | Pis 1–6 | Installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
-| `just fan_speed` | `fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
+| `just setup` | `pb_setup.yml` | Pis 1–6 | Installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
+| `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 
 `just` lists available commands. Both recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -41,7 +68,7 @@ just fan_speed -e fan_controller_speed=50
 
 On first provisioning, run `just fan_speed` before `just setup` so cooling is
 active during language compilation. Setup itself does not configure the fan.
-Without `just`, run `ansible-playbook setup.yml` or `ansible-playbook fan_speed.yml`.
+Without `just`, run `ansible-playbook pb_setup.yml` or `ansible-playbook pb_fan_speed.yml`.
 
 ### Common packages and runtimes
 
@@ -82,7 +109,7 @@ when the script or its configuration changes. Its process releases GPIO on stop.
 just fan_speed -e fan_controller_speed=50
 ```
 
-For a persistent setting, create `inventory/group_vars/fan_controller.yml` with
+For a persistent setting, edit `inventory/group_vars/fan_controller.yml` and set
 `fan_controller_speed: 50`. Pin, frequency, and dependency packages are configurable
 as well; see the fan role README. Extra vars apply only to that invocation.
 

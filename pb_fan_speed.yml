@@ -3,4 +3,4 @@
   hosts: fan_controller
   become: true
   roles:
-    - role: m1dnight.nanocluster.fan_controller
+    - role: fan_controller

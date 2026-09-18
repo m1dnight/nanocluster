@@ -5,8 +5,9 @@ as that user and run the role without global privilege escalation. Its Go role
 dependency and legacy system profile removal use sudo explicitly.
 
 Prerequisites: Git, make, a compiler, and plugin-specific build/download packages.
-`setup.yml` installs these and supplies the pinned Linux ARM64 Go version
-and checksum to the `geerlingguy.go` dependency. Go lives at `/usr/local/go`.
+`pb_setup.yml` installs these; `inventory/group_vars/nodes.yml` supplies the pinned
+Linux ARM64 Go version and checksum to the `geerlingguy.go` dependency.
+Go lives at `/usr/local/go`.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |

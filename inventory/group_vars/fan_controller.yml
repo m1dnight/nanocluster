@@ -1,0 +1,4 @@
+---
+fan_controller_speed: 100.0
+fan_controller_gpio_pin: 13
+fan_controller_pwm_frequency: 50
