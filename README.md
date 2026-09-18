@@ -38,6 +38,7 @@ inventory/
     nodes.yml
     fan_controller.yml
 roles/
+  locales/
   packages/
   asdf/
   fan_controller/
@@ -54,7 +55,7 @@ versions, and fan settings. Ansible discovers `roles/` beside the playbooks.
 
 | Command | Playbook | Hosts | Behavior |
 | --- | --- | --- | --- |
-| `just setup` | `pb_setup.yml` | Pis 1–6 | Installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
+| `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale and installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 
 `just` lists available commands. Both recipes accept additional Ansible arguments,
@@ -123,6 +124,22 @@ Select **SSH: nanocluster1** (or another node) to open just one session.
 The tasks use your usual SSH configuration and agent. Each node has a dedicated
 terminal; type `exit` to disconnect. Pi 7 is excluded while unplugged. If inventory
 addresses or the SSH user change, update `.vscode/tasks.json` to match.
+
+### SSH login warnings
+
+If SSH prints `cannot change locale (en_US.UTF-8)`, generate the missing locale on
+all active nodes, then reconnect:
+
+```sh
+just setup --tags locales
+```
+
+To repair only Pi 1, add `--limit nanocluster1`. Normal setup includes this role.
+Other installed locales and the system's default language are preserved.
+
+The default-password warning is separate. While logged in as `pi`, run `passwd`
+on each node and follow the prompts to choose a new password. Passwords are not
+managed by these playbooks.
 
 ## Local validation
 

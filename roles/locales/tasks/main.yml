@@ -1,0 +1,42 @@
+---
+- name: Generate the requested locale using an available bootstrap locale
+  environment:
+    LANG: C
+    LC_ALL: C
+  block:
+    - name: Validate locale configuration
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.os_family == 'Debian'
+          - "locales_name is match('^[a-zA-Z_]+[.]UTF-8$')"
+        fail_msg: This role requires a Debian-family host and a UTF-8 locale such as en_US.UTF-8.
+
+    - name: Install locale definitions and generation tools
+      ansible.builtin.apt:
+        name: locales
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Enable the requested locale definition
+      ansible.builtin.lineinfile:
+        path: /etc/locale.gen
+        regexp: '^#?\s*{{ locales_name | regex_escape }}\s+UTF-8\s*$'
+        line: "{{ locales_name }} UTF-8"
+        create: true
+        mode: "0644"
+      register: locales_definition
+
+    - name: Read generated locales
+      ansible.builtin.command: locale -a
+      register: locales_available
+      changed_when: false
+      check_mode: false
+
+    - name: Generate missing locales while preserving existing ones
+      ansible.builtin.command: locale-gen --keep-existing
+      when: >-
+        locales_definition.changed or
+        (locales_name | lower | replace('-', '')) not in
+        (locales_available.stdout_lines | map('lower') | list)
+      changed_when: true

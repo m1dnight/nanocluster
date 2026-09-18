@@ -11,6 +11,10 @@
         fail_msg: The node inventory currently pins the Linux ARM64 Go distribution.
 
   roles:
+    - role: locales
+      become: true
+      tags: [locales]
+
     - role: packages
       become: true
 

@@ -1,0 +1,8 @@
+---
+argument_specs:
+  main:
+    short_description: Generate a UTF-8 locale on Debian-family hosts
+    options:
+      locales_name:
+        type: str
+        description: UTF-8 locale to enable, such as en_US.UTF-8.
