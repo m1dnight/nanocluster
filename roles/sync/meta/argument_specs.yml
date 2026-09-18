@@ -1,0 +1,31 @@
+---
+argument_specs:
+  main:
+    short_description: Mirror a controller folder to a directory on each node
+    options:
+      sync_source:
+        type: str
+        required: true
+        description: Folder on the controller whose contents are mirrored. A leading ~ is expanded.
+      sync_destination:
+        type: str
+        required: true
+        description: Absolute path of a dedicated directory on each node. Created when missing.
+      sync_delete:
+        type: bool
+        default: true
+        description: Remove files under the destination that do not exist in the source.
+      sync_excludes:
+        type: list
+        elements: str
+        default: []
+        description: rsync exclude patterns. Excluded paths are neither copied nor deleted.
+      sync_allow_empty_source:
+        type: bool
+        default: false
+        description: Allow an empty source folder, which clears the destination on every node.
+      sync_rsync_opts:
+        type: list
+        elements: str
+        default: []
+        description: Extra rsync command-line options.

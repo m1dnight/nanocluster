@@ -33,6 +33,7 @@ pb_setup.yml
 pb_fan_speed.yml
 pb_ssh_keys.yml
 pb_erlang_cookie.yml
+pb_sync.yml
 inventory/
   hosts.yml
   group_vars/
@@ -46,6 +47,7 @@ roles/
   fan_controller/
   ssh_keys/
   erlang_cookie/
+  sync/
 tests/
 .github/workflows/
 ```
@@ -64,6 +66,7 @@ installed by `just deps`.
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 | `just ssh_keys` | `pb_ssh_keys.yml` | Pis 1–6 | Adds a configured public SSH key to selected existing accounts. |
 | `just erlang_cookie` | `pb_erlang_cookie.yml` | Pis 1–6 | Writes the same Erlang cookie to the selected account's home. |
+| `just sync` | `pb_sync.yml` | Pis 1–6 | Mirrors a local folder to every node, deleting node files that are absent locally. |
 
 `just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -142,6 +145,26 @@ value and supply `erlang_cookie_value` through an Ansible Vault vars file:
 Restart any running Erlang/Elixir nodes after changing their cookie; the role
 only writes the file. See [Erlang's authentication documentation](https://www.erlang.org/doc/system/distributed.html#security).
 
+## Shared folder
+
+`just sync` mirrors `~/nanocluster-sync` on this computer to `/home/pi/sync` on
+every active node with rsync. Anything under the destination that does not exist
+locally is **deleted**, so each node's copy always matches the local folder.
+Hidden files are included; `.DS_Store` files are excluded by default and left alone.
+
+Both paths and the exclude list live in `inventory/group_vars/nodes.yml`
+(`sync_source`, `sync_destination`, `sync_excludes`). Preview a run first:
+
+```sh
+just sync -e '{"sync_rsync_opts": ["--dry-run"]}'
+```
+
+The role refuses to run when the local folder is missing or empty, or when the
+destination is `/`, a top-level directory, or a home directory. To intentionally
+clear the nodes' copies, empty the local folder and pass
+`-e sync_allow_empty_source=true`. macOS's built-in rsync is sufficient; the
+nodes get rsync from the common package list. See the sync role README.
+
 ## SSH key access
 
 Paste your public key into `ssh_keys_public_key` in
@@ -205,6 +228,7 @@ just setup --syntax-check
 just fan_speed --syntax-check
 just ssh_keys --syntax-check
 just erlang_cookie --syntax-check
+just sync --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline
@@ -216,4 +240,6 @@ They cover fan argument validation and cleanup, and actual Ansible plugin tasks
 for installation, repeat runs, version changes, and preserving unrelated tools.
 Cookie tests cover shared values, ownership and permissions, repeat runs,
 rotation, invalid values, and hidden output even with `--diff`.
+Sync tests mirror temporary directories and cover deletion, excludes, repeat
+runs, and the guards against empty or missing sources and unsafe destinations.
 They do not validate physical wiring or OS package availability on the Pis.

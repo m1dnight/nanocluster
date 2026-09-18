@@ -23,3 +23,7 @@ ssh_keys *args:
 # Write the shared Erlang cookie to the configured user's home on every node.
 erlang_cookie *args:
     ansible-playbook pb_erlang_cookie.yml "$@"
+
+# Mirror the configured local folder to every node, deleting node files absent locally.
+sync *args:
+    ansible-playbook pb_sync.yml "$@"

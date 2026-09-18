@@ -1,0 +1,6 @@
+---
+- name: Mirror the shared folder to all nodes
+  hosts: nodes
+  gather_facts: false
+  roles:
+    - role: sync

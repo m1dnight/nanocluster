@@ -7,6 +7,7 @@ go_checksum: "b00b694903d126c588c378e72d3545549935d3982635ba3f7a964c9fa23fe3b9"
 
 packages_add_list:
   - git
+  - rsync
   - tmux
   - emacs-nox
   - nfs-common
@@ -42,3 +43,10 @@ asdf_plugins:
   - name: "elixir"
     repository: https://github.com/asdf-vm/asdf-elixir.git
     version: latest
+
+# Folder mirrored to every node by `just sync`. Node files absent locally are deleted.
+sync_source: ~/Documents/Code/elixir/distexample
+sync_destination: /home/pi/distexample
+sync_excludes:
+  - .DS_Store
+  - _build

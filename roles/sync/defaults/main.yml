@@ -1,0 +1,7 @@
+---
+sync_source: ""
+sync_destination: ""
+sync_delete: true
+sync_excludes: []
+sync_allow_empty_source: false
+sync_rsync_opts: []

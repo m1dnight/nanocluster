@@ -1,0 +1,76 @@
+---
+- name: Require a source and destination
+  ansible.builtin.assert:
+    that:
+      - sync_source | trim | length > 0
+      - sync_destination | trim | length > 0
+    fail_msg: Set sync_source (controller folder) and sync_destination (absolute node path) in inventory/group_vars/nodes.yml.
+
+- name: Normalize both paths
+  ansible.builtin.set_fact:
+    sync_source_path: "{{ sync_source | trim | expanduser | regex_replace('/+$', '') }}"
+    sync_destination_path: "{{ sync_destination | trim | regex_replace('/+$', '') }}"
+
+# With delete enabled, everything under the destination that is not in the
+# source is removed. Refuse locations where that would destroy a system.
+- name: Refuse the filesystem root, top-level directories, and home directories as destination
+  ansible.builtin.assert:
+    that:
+      - sync_destination_path is match('^/')
+      - sync_destination_path is not match('^/[^/]*$')
+      - sync_destination_path is not match('^/home/[^/]+$')
+      - sync_destination_path is not match('^/root$')
+      - "'..' not in sync_destination_path.split('/')"
+    fail_msg: >-
+      sync_destination must be an absolute path to a dedicated directory such as /home/pi/sync,
+      not the root, a top-level directory, or a home directory; contents not in the source are deleted there.
+
+- name: Check the source folder on the controller
+  ansible.builtin.stat:
+    path: "{{ sync_source_path }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: sync_source_stat
+
+- name: Require the source to be an existing directory
+  ansible.builtin.assert:
+    that:
+      - sync_source_stat.stat.exists
+      - sync_source_stat.stat.isdir
+    fail_msg: "sync_source {{ sync_source_path }} is not a directory on this computer."
+
+- name: List the top level of the source folder
+  ansible.builtin.find:
+    paths: "{{ sync_source_path }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: sync_source_entries
+  when: not sync_allow_empty_source
+
+# An empty source (for example an unmounted drive) would wipe every node's copy.
+- name: Refuse to mirror an empty source unless explicitly allowed
+  ansible.builtin.assert:
+    that:
+      - sync_source_entries.matched > 0
+    fail_msg: "sync_source {{ sync_source_path }} is empty; set sync_allow_empty_source=true to clear the nodes' copies."
+  when: not sync_allow_empty_source
+
+- name: Create the destination directory
+  ansible.builtin.file:
+    path: "{{ sync_destination_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Mirror the source folder to the destination
+  ansible.posix.synchronize:
+    src: "{{ sync_source_path }}/"
+    dest: "{{ sync_destination_path }}/"
+    mode: push
+    archive: true
+    delete: "{{ sync_delete }}"
+    rsync_opts: "{{ sync_excludes | map('regex_replace', '^', '--exclude=') | list + sync_rsync_opts }}"
