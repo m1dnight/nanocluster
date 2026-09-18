@@ -1,0 +1,133 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SSH: all nodes",
+      "detail": "Open a separate SSH terminal for each active Raspberry Pi.",
+      "dependsOn": [
+        "SSH: nanocluster1",
+        "SSH: nanocluster2",
+        "SSH: nanocluster3",
+        "SSH: nanocluster4",
+        "SSH: nanocluster5",
+        "SSH: nanocluster6"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "SSH: nanocluster1",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc1.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "SSH: nanocluster2",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc2.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "SSH: nanocluster3",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc3.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "SSH: nanocluster4",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc4.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "SSH: nanocluster5",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc5.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "SSH: nanocluster6",
+      "type": "process",
+      "command": "ssh",
+      "args": [
+        "-t",
+        "pi@nc6.localdomain"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    }
+  ]
+}

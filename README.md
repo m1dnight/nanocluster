@@ -113,6 +113,17 @@ For a persistent setting, edit `inventory/group_vars/fan_controller.yml` and set
 `fan_controller_speed: 50`. Pin, frequency, and dependency packages are configurable
 as well; see the fan role README. Extra vars apply only to that invocation.
 
+## SSH terminals in VS Code
+
+Open the repository folder in VS Code, then use **Tasks: Run Task** in the Command
+Palette and select **SSH: all nodes**. This opens six separate terminal sessions,
+connecting as `pi` to `nc1.localdomain` through `nc6.localdomain` in parallel.
+Select **SSH: nanocluster1** (or another node) to open just one session.
+
+The tasks use your usual SSH configuration and agent. Each node has a dedicated
+terminal; type `exit` to disconnect. Pi 7 is excluded while unplugged. If inventory
+addresses or the SSH user change, update `.vscode/tasks.json` to match.
+
 ## Local validation
 
 These checks do not connect to the Pis:
