@@ -1,17 +1,21 @@
+---
 packages_add_list:
   - git
   - tmux
   - emacs-nox
-  - nfs-client
+  - nfs-common
   - tree
   - ncdu
   - net-tools
   - make
   # erlang deps
   - build-essential
+  - libssl-dev
+  - curl
+  - ca-certificates
+  - unzip
   - autoconf
   - m4
-  - libncurses5-dev
   - libwxgtk3.2-dev
   - libwxgtk-webview3.2-dev
   - libgl1-mesa-dev
@@ -25,10 +29,10 @@ packages_add_list:
   - libncurses-dev
 
 asdf_plugins:
-  - name: "erlang" # a plugin name
-    repository: "https://github.com/asdf-vm/asdf-erlang.git" # a plugin repository, optional
+  - name: "erlang"
+    repository: "https://github.com/asdf-vm/asdf-erlang.git"
     version: latest
 
   - name: "elixir"
     repository: https://github.com/asdf-vm/asdf-elixir.git
-    version: latest # set as a global version, optional
+    version: latest

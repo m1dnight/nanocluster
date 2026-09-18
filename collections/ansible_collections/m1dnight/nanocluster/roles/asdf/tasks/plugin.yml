@@ -1,0 +1,41 @@
+---
+- name: Configure plugin with the asdf environment
+  environment:
+    ASDF_DATA_DIR: "{{ asdf_directory }}"
+    PATH: "{{ asdf_directory }}/shims:{{ asdf_directory }}:/usr/local/go/bin:{{ ansible_facts.env.PATH }}"
+  block:
+    - name: Add asdf plugin
+      ansible.builtin.command:
+        argv: "{{ [asdf_directory + '/asdf', 'plugin', 'add', asdf_plugin.name] + ([asdf_plugin.repository] if asdf_plugin.repository is defined else []) }}"
+        creates: "{{ asdf_directory }}/plugins/{{ asdf_plugin.name }}"
+
+    - name: Resolve the latest version once for installation and selection
+      ansible.builtin.command:
+        argv:
+          - "{{ asdf_directory }}/asdf"
+          - latest
+          - "{{ asdf_plugin.name }}"
+      register: asdf_latest_version
+      changed_when: false
+      when: asdf_plugin.version == 'latest'
+
+    - name: Choose the requested plugin version
+      ansible.builtin.set_fact:
+        asdf_resolved_version: "{{ asdf_latest_version.stdout | trim if asdf_plugin.version == 'latest' else asdf_plugin.version }}"
+
+    - name: Install asdf plugin version
+      ansible.builtin.command:
+        argv:
+          - "{{ asdf_directory }}/asdf"
+          - install
+          - "{{ asdf_plugin.name }}"
+          - "{{ asdf_resolved_version }}"
+        creates: "{{ asdf_directory }}/installs/{{ asdf_plugin.name }}/{{ asdf_resolved_version }}"
+
+    - name: Select the user's default plugin version
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_facts.user_dir }}/.tool-versions"
+        regexp: "^{{ asdf_plugin.name | regex_escape }}\\s+"
+        line: "{{ asdf_plugin.name }} {{ asdf_resolved_version }}"
+        create: true
+        mode: "0644"

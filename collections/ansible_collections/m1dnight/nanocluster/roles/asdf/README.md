@@ -1,89 +1,31 @@
-m1dnight.nanocluster asdf Role
-========================
+# asdf
 
-A brief description of the role goes here.
+Build asdf and configure language runtimes for the connecting user. Gather facts
+as that user and run the role without global privilege escalation. Its Go role
+dependency and legacy system profile removal use sudo explicitly.
 
-Requirements
-------------
+Prerequisites: Git, make, a compiler, and plugin-specific build/download packages.
+`setup.yml` installs these and supplies the pinned Linux ARM64 Go version
+and checksum to the `geerlingguy.go` dependency. Go lives at `/usr/local/go`.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `asdf_version` | `v0.18.0` | Git tag or commit to build. |
+| `asdf_directory` | `~/.asdf` for the connecting user | Source, plugins, shims, and installed runtimes. Must be a subdirectory of that user's home. |
+| `asdf_plugins` | `[]` | Ordered list of `{name, version, repository?}` dictionaries. |
+| `asdf_cleanup` | `false` | Explicitly delete the entire installation, including all runtimes, before rebuilding. |
 
-Role Variables
---------------
+Supported version selections are an exact release or `latest`. Place Erlang
+before Elixir so Erlang's shims/default version are available during Elixir setup.
+Pin exact releases to keep all nodes reproducible across separate runs.
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The role rebuilds when the checkout changes or the executable is missing. Existing
+plugins and runtime directories are reused. Each `latest` is resolved once per
+host/run for both installation and selection. Only the selected plugin's entry in
+`~/.tool-versions` is changed; other tools remain intact.
 
-Dependencies
-------------
+The role manages blocks in `.profile` and `.bashrc` with `ASDF_DATA_DIR` and shims
+first on PATH, and removes its old `/etc/profile.d/asdf-path.sh`. Other shell types
+need equivalent setup. Plugin/runtime commands are skipped during check mode.
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-```yaml
-- name: Execute tasks on servers
-  hosts: servers
-  roles:
-    - role: m1dnight.nanocluster.run
-      run_x: 42
-```
-
-Another way to consume this role would be:
-
-```yaml
-- name: Initialize the run role from m1dnight.nanocluster
-  hosts: servers
-  gather_facts: false
-  tasks:
-    - name: Trigger invocation of run role
-      ansible.builtin.include_role:
-        name: m1dnight.nanocluster.run
-      vars:
-        run_x: 42
-```
-
-Role Idempotency
-----------------
-
-Designation of the role as idempotent (True/False)
-
-Role Atomicity
-----------------
-
-Designation of the role as atomic if applicable (True/False)
-
-Roll-back capabilities
-----------------------
-
-Define the roll-back capabilities of the role
-
-Argument Specification
-----------------------
-
-Including an example of how to add an argument Specification file that validates the arguments provided to the role.
-
-```
-argument_specs:
-  main:
-    short_description: Role description.
-    options:
-      string_arg1:
-        description: string argument description.
-        type: "str"
-        default: "x"
-        choices: ["x", "y"]
-```
-
-License
--------
-
-# TO-DO: Update the license to the one you want to use (delete this line after setting the license)
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Version-selection behavior follows the [asdf documentation](https://asdf-vm.com/manage/versions.html).

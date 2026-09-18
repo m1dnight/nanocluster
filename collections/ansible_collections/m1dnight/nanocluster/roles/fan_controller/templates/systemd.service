@@ -1,11 +1,11 @@
 [Unit]
 Description=Fan PWM Control
-After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 {{ fan_controller_path }}/{{ fan_controller_script_name }} {{ fan_controller_speed }}
-Restart=always
+ExecStart=/usr/bin/python3 -u "{{ fan_controller_path }}/{{ fan_controller_script_name }}" {{ fan_controller_speed }} --pin {{ fan_controller_gpio_pin }} --frequency {{ fan_controller_pwm_frequency }}
+Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+---
+- name: Configure the shared fan controller and speed
+  hosts: fan_controller
+  become: true
+  roles:
+    - role: m1dnight.nanocluster.fan_controller

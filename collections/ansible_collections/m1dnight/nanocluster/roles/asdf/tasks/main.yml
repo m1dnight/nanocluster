@@ -1,56 +1,83 @@
 ---
-# tasks file for m1dnight.nanocluster.asdf
+- name: Validate asdf installation directory
+  ansible.builtin.assert:
+    that:
+      - asdf_directory.startswith(ansible_facts.user_dir + '/')
+      - "'..' not in asdf_directory.split('/')"
+    fail_msg: Install asdf in a subdirectory of the connecting user's home.
 
-- name: Remove asdf entirely
+- name: Remove asdf when explicitly requested
   ansible.builtin.file:
     path: "{{ asdf_directory }}"
     state: absent
   when: asdf_cleanup
 
-- name: Clone ASDF
+- name: Clone asdf
   ansible.builtin.git:
-    repo: "https://github.com/asdf-vm/asdf.git"
+    repo: https://github.com/asdf-vm/asdf.git
     dest: "{{ asdf_directory }}"
     version: "{{ asdf_version }}"
+  register: asdf_checkout
 
-- name: Build ASDF
-  ansible.builtin.shell:
-    cmd: "make"
-    executable: /bin/bash
+- name: Check for the asdf executable
+  ansible.builtin.stat:
+    path: "{{ asdf_directory }}/asdf"
+  register: asdf_binary
+
+- name: Check for the last successfully built revision
+  ansible.builtin.stat:
+    path: "{{ asdf_directory }}/.ansible-build-revision"
+  register: asdf_revision_file
+
+- name: Read the last successfully built revision
+  ansible.builtin.slurp:
+    src: "{{ asdf_directory }}/.ansible-build-revision"
+  register: asdf_built_revision
+  when: asdf_revision_file.stat.exists
+
+- name: Build asdf when its source changes or the executable is missing
+  ansible.builtin.command:
+    cmd: make
     chdir: "{{ asdf_directory }}"
+  environment:
+    GOROOT: /usr/local/go
+    PATH: "/usr/local/go/bin:{{ ansible_facts.env.PATH }}"
+  when: >-
+    asdf_checkout.changed or not asdf_binary.stat.exists or
+    (asdf_built_revision.content | default('') | b64decode | trim) != asdf_checkout.after
   changed_when: true
 
-
-- name: Add asdf to to system-wide $PATH.
-  become: true
+- name: Record the successfully built revision
   ansible.builtin.copy:
-    dest: /etc/profile.d/asdf-path.sh
-    mode: "0555"
-    content: |-
-      export PATH=$PATH:{{ asdf_directory }}/
-      export PATH=$PATH:{{ asdf_directory }}/shims/
+    dest: "{{ asdf_directory }}/.ansible-build-revision"
+    content: "{{ asdf_checkout.after }}\n"
+    mode: "0644"
+  when: not ansible_check_mode
 
-- name: Install ASDF plugins
-  environment:
-    PATH: "{{ asdf_directory }}/:{{ ansible_env.PATH }}"
-  ansible.builtin.command:
-    cmd: "asdf plugin add {{ item.name }} {{ item.repository }}"
-  register: asdf_plugin_output
-  loop: "{{ asdf_plugins }}"
-  changed_when: true
+- name: Remove the legacy system-wide asdf path
+  become: true
+  ansible.builtin.file:
+    path: /etc/profile.d/asdf-path.sh
+    state: absent
 
-- name: Install ASDF plugin versions
-  environment:
-    PATH: "{{ asdf_directory }}/:{{ ansible_env.PATH }}"
-  ansible.builtin.command:
-    cmd: "asdf install {{ item.name }} {{ item.version }}"
-  loop: "{{ asdf_plugins }}"
-  changed_when: true
+- name: Configure asdf for the connecting user's login and interactive shells
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts.user_dir }}/{{ item }}"
+    create: true
+    mode: "0644"
+    marker: "# {mark} ANSIBLE MANAGED ASDF"
+    block: |
+      export ASDF_DATA_DIR={{ asdf_directory | quote }}
+      export PATH={{ (asdf_directory + '/shims:' + asdf_directory) | quote }}:"$PATH"
+  loop:
+    - .profile
+    - .bashrc
 
-- name: Set plugin global versions
-  environment:
-    PATH: "{{ asdf_directory }}:{{ ansible_env.PATH }}"
-  ansible.builtin.command:
-    cmd: "asdf set -u {{ item.name }} {{ item.version }}"
+# These commands require binaries/plugins that may not exist in a dry run.
+- name: Configure asdf plugins and versions
+  ansible.builtin.include_tasks: plugin.yml
   loop: "{{ asdf_plugins }}"
-  changed_when: true
+  loop_control:
+    loop_var: asdf_plugin
+    label: "{{ asdf_plugin.name }}"
+  when: not ansible_check_mode

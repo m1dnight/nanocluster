@@ -1,16 +1,11 @@
 ---
-# Minimal galaxy.yml for a playbook project for tools to recognize this as a collection
-
-namespace: "m1dnight"
-name: "nanocluster"
+namespace: m1dnight
+name: nanocluster
 readme: README.md
 version: 0.0.1
 authors:
-  - your name <example@domain.com>
-
-description: Collection for m1dnight.nanocluster playbook project
-
-# TO-DO: update the tags based on your content type
-tags: ["tools"]
-
-repository: NA
+  - Christophe De Troyer
+description: Common node provisioning and shared fan control for the nanocluster
+license: [GPL-3.0-or-later]
+tags: [linux, raspberry, infrastructure]
+repository: https://github.com/m1dnight/nanocluster

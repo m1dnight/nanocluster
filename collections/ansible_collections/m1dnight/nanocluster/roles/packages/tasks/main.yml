@@ -1,27 +1,36 @@
 ---
-# tasks file for m1dnight.nanocluster.packages
+- name: Validate package selections
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == 'Debian'
+      - packages_add_list | intersect(packages_remove_list) | length == 0
+    fail_msg: This role requires Debian-family hosts and disjoint install/remove lists.
 
-# task example for debugging a value
+- name: Refresh package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ packages_cache_valid_time }}"
+  when: packages_add_list | length > 0 or packages_upgrade
+
 - name: Install packages
   ansible.builtin.apt:
-    name: "{{ item }}"
+    name: "{{ packages_add_list }}"
     state: present
-    update_cache: true
-  loop: "{{ packages_add_list }}"
+  when: packages_add_list | length > 0
 
 - name: Remove packages
   ansible.builtin.apt:
-    name: "{{ item }}"
+    name: "{{ packages_remove_list }}"
     state: absent
-  loop: "{{ packages_remove_list }}"
+  when: packages_remove_list | length > 0
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+  when: packages_upgrade
 
 - name: Remove dependencies that are no longer required
   ansible.builtin.apt:
     autoremove: true
     purge: true
   when: packages_autoremove
-
-- name: Upgrade all packages
-  ansible.builtin.apt:
-    upgrade: dist
-  when: packages_upgrade

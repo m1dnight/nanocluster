@@ -1,11 +1,24 @@
 ---
-# argument spec file for m1dnight.nanocluster.fan_controller
-
 argument_specs:
   main:
-    short_description: Role description.
+    short_description: Install and run the shared fan controller
     options:
-      my_variable:
+      fan_controller_path:
+        type: path
+        description: Absolute directory for the controller script.
+      fan_controller_script_name:
         type: str
-        description: A simple string argument for demonstration.
-        default: "default_value"
+        description: Python script filename.
+      fan_controller_speed:
+        type: float
+        description: Fixed PWM duty cycle from 0 to 100 percent.
+      fan_controller_gpio_pin:
+        type: int
+        description: BCM GPIO number connected to the fan controller.
+      fan_controller_pwm_frequency:
+        type: int
+        description: Positive PWM frequency in Hz.
+      fan_controller_packages:
+        type: list
+        elements: str
+        description: Debian packages providing Python and the RPi.GPIO API.

@@ -1,33 +1,55 @@
 ---
-# tasks file for m1dnight.nanocluster.fan_controller
+- name: Validate fan controller settings
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == 'Debian'
+      - fan_controller_speed | float >= 0
+      - fan_controller_speed | float <= 100
+      - fan_controller_gpio_pin | int >= 0
+      - fan_controller_gpio_pin | int <= 27
+      - fan_controller_pwm_frequency | int > 0
+      - fan_controller_path.startswith('/')
+      - "fan_controller_script_name is match('^[A-Za-z0-9_-]+[.]py$')"
+    fail_msg: Check the Debian host, absolute script path, speed (0-100), BCM pin (0-27), and positive PWM frequency.
 
-# task example for debugging a value
+- name: Install fan controller dependencies
+  ansible.builtin.apt:
+    name: "{{ fan_controller_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
 - name: Create fan control directory
   ansible.builtin.file:
     path: "{{ fan_controller_path }}"
     state: directory
-    mode: '0755'
+    owner: root
+    group: root
+    mode: "0755"
 
 - name: Copy fan control script
   ansible.builtin.copy:
     dest: "{{ fan_controller_path }}/{{ fan_controller_script_name }}"
-    mode: '0755'
+    mode: "0755"
+    owner: root
+    group: root
     src: fan.py
+  notify: Restart fan-control
 
 - name: Create systemd service file
   ansible.builtin.template:
     dest: /etc/systemd/system/fan-control.service
     src: systemd.service
-    mode: '0755'
+    mode: "0644"
+    owner: root
+    group: root
   notify: Restart fan-control
 
-
-- name: Reload systemd daemon
-  ansible.builtin.systemd:
-    daemon_reload: true
+- name: Apply fan controller changes before checking the service
+  ansible.builtin.meta: flush_handlers
 
 - name: Enable and start fan-control service
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: fan-control
     enabled: true
     state: started

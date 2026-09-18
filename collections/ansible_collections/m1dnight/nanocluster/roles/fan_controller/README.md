@@ -1,89 +1,24 @@
-m1dnight.nanocluster fan_controller Role
-========================
+# fan_controller
 
-A brief description of the role goes here.
+Install a fixed-duty-cycle fan service on the Pi with physical controller access.
+Gather facts and use sudo. Requires systemd and a Debian-family OS providing a
+compatible implementation of the RPi.GPIO API. Confirm the GPIO backend supports
+your Pi model; the default `python3-rpi.gpio` package is not a universal Pi 5 backend.
 
-Requirements
-------------
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `fan_controller_path` | `/opt` | Script directory. |
+| `fan_controller_script_name` | `fan.py` | Script filename. |
+| `fan_controller_speed` | `100.0` | PWM duty cycle, 0–100 percent. |
+| `fan_controller_gpio_pin` | `13` | BCM GPIO number. |
+| `fan_controller_pwm_frequency` | `50` | PWM frequency in Hz. |
+| `fan_controller_packages` | `[python3, python3-rpi.gpio]` | Runtime and GPIO dependency packages. |
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+The role installs the dependencies, validates settings, and enables
+`fan-control.service`. Script or unit changes trigger a systemd reload and service
+restart. The script logs the actual configured percentage and releases GPIO on
+SIGINT, SIGTERM, or an exception. Systemd retries failures after five seconds.
 
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-```yaml
-- name: Execute tasks on servers
-  hosts: servers
-  roles:
-    - role: m1dnight.nanocluster.run
-      run_x: 42
-```
-
-Another way to consume this role would be:
-
-```yaml
-- name: Initialize the run role from m1dnight.nanocluster
-  hosts: servers
-  gather_facts: false
-  tasks:
-    - name: Trigger invocation of run role
-      ansible.builtin.include_role:
-        name: m1dnight.nanocluster.run
-      vars:
-        run_x: 42
-```
-
-Role Idempotency
-----------------
-
-Designation of the role as idempotent (True/False)
-
-Role Atomicity
-----------------
-
-Designation of the role as atomic if applicable (True/False)
-
-Roll-back capabilities
-----------------------
-
-Define the roll-back capabilities of the role
-
-Argument Specification
-----------------------
-
-Including an example of how to add an argument Specification file that validates the arguments provided to the role.
-
-```
-argument_specs:
-  main:
-    short_description: Role description.
-    options:
-      string_arg1:
-        description: string argument description.
-        type: "str"
-        default: "x"
-        choices: ["x", "y"]
-```
-
-License
--------
-
-# TO-DO: Update the license to the one you want to use (delete this line after setting the license)
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+The controller maintains a fixed speed; it does not read temperatures. Pin and
+frequency defaults preserve the original wiring assumptions. Zero duty cycle
+stops PWM drive. Check actual cooling on the hardware after changing settings.

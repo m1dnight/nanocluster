@@ -1,33 +1,64 @@
-import RPi.GPIO as GPIO
+"""Keep the shared fan at a configured PWM duty cycle until stopped."""
+
+import argparse
 import signal
-import sys
 
-# Get duty cycle from command line argument
-if len(sys.argv) != 2:
-    print("Usage: fan_control.py <duty_cycle>")
-    sys.exit(1)
 
-try:
-    duty_cycle = float(sys.argv[1])
-    if not 0 <= duty_cycle <= 100:
-        print("Error: duty_cycle must be between 0 and 100")
-        sys.exit(1)
-except ValueError:
-    print("Error: duty_cycle must be a number")
-    sys.exit(1)
+def duty_cycle(value):
+    """Accept only finite percentages, including both endpoints."""
+    try:
+        result = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("duty cycle must be a number") from exc
+    if not 0 <= result <= 100:
+        raise argparse.ArgumentTypeError("duty cycle must be between 0 and 100")
+    return result
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(13, GPIO.OUT)
-pwm = GPIO.PWM(13, 50)
-pwm.start(duty_cycle)
 
-def cleanup(sig, frame):
-    pwm.stop()
-    GPIO.cleanup()
-    sys.exit(0)
+def positive_integer(value):
+    result = int(value)
+    if result <= 0:
+        raise argparse.ArgumentTypeError("frequency must be positive")
+    return result
 
-signal.signal(signal.SIGINT, cleanup)
-signal.signal(signal.SIGTERM, cleanup)
 
-print("Fan running at 20% duty cycle. Press Ctrl+C to stop.")
-signal.pause()  # Keep running forever
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("duty_cycle", type=duty_cycle)
+    parser.add_argument("--pin", type=int, choices=range(28), default=13)
+    parser.add_argument("--frequency", type=positive_integer, default=50)
+    return parser.parse_args(argv)
+
+
+def stop(_signum, _frame):
+    raise SystemExit(0)
+
+
+def run(args, gpio):
+    pwm = None
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
+    try:
+        gpio.setmode(gpio.BCM)
+        gpio.setup(args.pin, gpio.OUT)
+        pwm = gpio.PWM(args.pin, args.frequency)
+        pwm.start(args.duty_cycle)
+        print(f"Fan running at {args.duty_cycle:g}% duty cycle on BCM {args.pin}.", flush=True)
+        while True:
+            signal.pause()
+    finally:
+        if pwm is not None:
+            pwm.stop()
+        gpio.cleanup(args.pin)
+
+
+def main():
+    args = parse_args()
+    # Parse and validate before touching hardware; --help also works without GPIO.
+    import RPi.GPIO as gpio
+
+    run(args, gpio)
+
+
+if __name__ == "__main__":
+    main()

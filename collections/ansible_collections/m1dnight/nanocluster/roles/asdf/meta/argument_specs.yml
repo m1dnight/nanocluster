@@ -1,11 +1,30 @@
 ---
-# argument spec file for m1dnight.nanocluster.asdf
-
 argument_specs:
   main:
-    short_description: Role description.
+    short_description: Install asdf and selected language runtimes
     options:
-      my_variable:
+      asdf_version:
         type: str
-        description: A simple string argument for demonstration.
-        default: "default_value"
+        description: Git tag or commit of asdf to build.
+      asdf_directory:
+        type: path
+        description: Source and data directory beneath the connecting user's home.
+      asdf_cleanup:
+        type: bool
+        description: Delete the asdf directory and all installed runtimes before rebuilding.
+      asdf_plugins:
+        type: list
+        elements: dict
+        description: Plugins and versions, processed in order.
+        options:
+          name:
+            type: str
+            required: true
+            description: Plugin name.
+          repository:
+            type: str
+            description: Optional plugin Git repository URL.
+          version:
+            type: str
+            required: true
+            description: Exact release number or latest.

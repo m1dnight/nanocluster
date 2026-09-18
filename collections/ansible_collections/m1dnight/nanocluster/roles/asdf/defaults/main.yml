@@ -1,9 +1,5 @@
 ---
-# defaults file for m1dnight.nanocluster.asdf
 asdf_version: v0.18.0
-
-asdf_directory: "{{ ansible_user_dir }}/.asdf"
-
+asdf_directory: "{{ ansible_facts.user_dir }}/.asdf"
 asdf_plugins: []
-
 asdf_cleanup: false

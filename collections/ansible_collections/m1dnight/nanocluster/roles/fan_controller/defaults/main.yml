@@ -1,8 +1,9 @@
 ---
-# defaults file for m1dnight.nanocluster.fan_controller
-
 fan_controller_path: /opt
-
 fan_controller_script_name: fan.py
-
-fan_controller_speed: 10.0
+fan_controller_speed: 100.0
+fan_controller_gpio_pin: 13
+fan_controller_pwm_frequency: 50
+fan_controller_packages:
+  - python3
+  - python3-rpi.gpio

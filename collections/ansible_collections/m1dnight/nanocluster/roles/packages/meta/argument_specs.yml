@@ -1,11 +1,22 @@
 ---
-# argument spec file for m1dnight.nanocluster.packages
-
 argument_specs:
   main:
-    short_description: Role description.
+    short_description: Manage Debian packages
     options:
-      my_variable:
-        type: str
-        description: A simple string argument for demonstration.
-        default: "default_value"
+      packages_add_list:
+        type: list
+        elements: str
+        description: Packages to install.
+      packages_remove_list:
+        type: list
+        elements: str
+        description: Packages to remove.
+      packages_cache_valid_time:
+        type: int
+        description: Maximum age in seconds of the apt cache.
+      packages_upgrade:
+        type: bool
+        description: Perform a distribution upgrade.
+      packages_autoremove:
+        type: bool
+        description: Purge unused dependencies after package operations.

@@ -1,0 +1,19 @@
+---
+- name: Set up all nanocluster nodes
+  hosts: nodes
+  vars:
+    go_version: "1.25.5"
+    go_platform: linux
+    go_arch: arm64
+    go_checksum: "b00b694903d126c588c378e72d3545549935d3982635ba3f7a964c9fa23fe3b9"
+  pre_tasks:
+    - name: Check the platform for the pinned Go binary
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.system == 'Linux'
+          - ansible_facts.architecture == 'aarch64'
+        fail_msg: This playbook currently pins the Linux ARM64 Go distribution.
+  roles:
+    - role: m1dnight.nanocluster.packages
+      become: true
+    - role: m1dnight.nanocluster.asdf
