@@ -1,4 +1,7 @@
 ---
+collections:
+  - name: ansible.posix
+    version: 2.2.0
 roles:
   - name: geerlingguy.go
     version: 1.1.0

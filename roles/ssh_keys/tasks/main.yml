@@ -1,0 +1,31 @@
+---
+- name: Require a public key and explicit target accounts
+  ansible.builtin.assert:
+    that:
+      - ssh_keys_public_key | trim | length > 0
+      - ssh_keys_users | length > 0
+    fail_msg: Set ssh_keys_public_key and ssh_keys_users in inventory/group_vars/all.yml.
+
+- name: Check that the supplied value contains public key data
+  ansible.builtin.assert:
+    that:
+      - "(ssh_keys_public_key | trim) is match('^(ssh-|ecdsa-|sk-)')"
+      - "'PRIVATE KEY' not in ssh_keys_public_key"
+    fail_msg: Supply OpenSSH public key text, not a private key.
+  no_log: true
+
+- name: Verify all requested accounts exist before changing their keys
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ item }}"
+    fail_key: true
+  loop: "{{ ssh_keys_users | unique }}"
+
+- name: Add the public key to each selected account
+  ansible.posix.authorized_key:
+    user: "{{ item }}"
+    key: "{{ ssh_keys_public_key | trim }}"
+    state: present
+    manage_dir: true
+    exclusive: false
+  loop: "{{ ssh_keys_users | unique }}"

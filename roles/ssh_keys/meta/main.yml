@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: Christophe De Troyer
+  description: Add a controller's public SSH key to explicitly selected node accounts
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.17"
+dependencies: []

@@ -4,9 +4,9 @@ set positional-arguments := true
 default:
     @just --list
 
-# Install the Ansible role dependency on this machine.
+# Install Ansible role and collection dependencies on this machine.
 deps:
-    ansible-galaxy role install -r requirements.yml
+    ansible-galaxy install -r requirements.yml
 
 # Set up packages, Go, asdf, Erlang, and Elixir on all active nodes.
 setup *args:
@@ -15,3 +15,7 @@ setup *args:
 # Configure Pi 1's fan; pass -e fan_controller_speed=50 to set its duty cycle.
 fan_speed *args:
     ansible-playbook pb_fan_speed.yml "$@"
+
+# Add the configured SSH public key to selected accounts on all active nodes.
+ssh_keys *args:
+    ansible-playbook pb_ssh_keys.yml "$@"

@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: Authorize a public SSH key for existing user accounts
+    options:
+      ssh_keys_public_key:
+        type: str
+        description: OpenSSH public key text to add to the selected accounts.
+      ssh_keys_users:
+        type: list
+        elements: str
+        description: Existing usernames that should receive the public key on each node.

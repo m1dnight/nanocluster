@@ -13,7 +13,7 @@ in the inventory. The only groups are `nodes` and `fan_controller`.
 - Fan hardware compatible with the RPi.GPIO API on Pi 1. The default package is
   `python3-rpi.gpio`; confirm compatibility with your Pi model and OS image.
 
-Install the Go role dependency on the controller:
+Install the Go role and SSH-key collection dependencies on the controller:
 
 ```sh
 just deps
@@ -31,6 +31,7 @@ justfile
 requirements.yml
 pb_setup.yml
 pb_fan_speed.yml
+pb_ssh_keys.yml
 inventory/
   hosts.yml
   group_vars/
@@ -42,6 +43,7 @@ roles/
   packages/
   asdf/
   fan_controller/
+  ssh_keys/
 tests/
 .github/workflows/
 ```
@@ -49,7 +51,8 @@ tests/
 Playbooks select hosts and roles. Local roles contain the implementation and
 defaults; inventory group variables hold the cluster's package lists, toolchain
 versions, and fan settings. Ansible discovers `roles/` beside the playbooks.
-`requirements.yml` pins the external Go role installed by `just deps`.
+`requirements.yml` pins the external Go role and `ansible.posix` collection
+installed by `just deps`.
 
 ## Playbooks
 
@@ -57,8 +60,9 @@ versions, and fan settings. Ansible discovers `roles/` beside the playbooks.
 | --- | --- | --- | --- |
 | `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale and installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
+| `just ssh_keys` | `pb_ssh_keys.yml` | Pis 1–6 | Adds a configured public SSH key to selected existing accounts. |
 
-`just` lists available commands. Both recipes accept additional Ansible arguments,
+`just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
 
 ```sh
@@ -114,6 +118,32 @@ For a persistent setting, edit `inventory/group_vars/fan_controller.yml` and set
 `fan_controller_speed: 50`. Pin, frequency, and dependency packages are configurable
 as well; see the fan role README. Extra vars apply only to that invocation.
 
+## SSH key access
+
+Paste your public key into `ssh_keys_public_key` in
+`inventory/group_vars/all.yml`. The supplied `christophe@bloempot` key is already
+configured there, with `ssh_keys_users: [pi]` targeting `pi` on all six nodes.
+Add other existing usernames to that list if needed. Apply it with:
+
+```sh
+just deps
+just ssh_keys
+```
+
+Use an existing working SSH key or append `--ask-pass` to bootstrap with password
+authentication. Append `--ask-become-pass` if sudo requires a password. The role
+preserves other keys and password login, and does not create accounts. The private
+key stays on your computer. An unconfigured run stops with instructions.
+
+After provisioning, test a new connection with the matching private key:
+
+```sh
+ssh -i ~/.ssh/id_rsa pi@nc1.localdomain
+```
+
+Use your actual key path in place of the example. Add a custom private key to your
+SSH agent or select it in your SSH configuration for VS Code terminals and Ansible.
+
 ## SSH terminals in VS Code
 
 Open the repository folder in VS Code, then use **Tasks: Run Task** in the Command
@@ -149,6 +179,7 @@ These checks do not connect to the Pis:
 ansible-inventory --graph
 just setup --syntax-check
 just fan_speed --syntax-check
+just ssh_keys --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline
