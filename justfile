@@ -20,9 +20,9 @@ fan_speed *args:
 ssh_keys *args:
     ansible-playbook pb_ssh_keys.yml "$@"
 
-# Write the shared Erlang cookie to the configured user's home on every node.
-erlang_cookie *args:
-    ansible-playbook pb_erlang_cookie.yml "$@"
+# Write the shared Erlang cookie and hosts file to the configured user's home on every node.
+erlang_setup *args:
+    ansible-playbook pb_erlang_setup.yml "$@"
 
 # Mirror the configured local folder to every node, deleting node files absent locally.
 sync *args:
@@ -35,3 +35,7 @@ elixir_app *args:
 # Mirror a directory from the configured source node to every other node, deleting files absent on the source.
 mirror *args:
     ansible-playbook pb_mirror.yml "$@"
+
+# Restart the configured Elixir release service on every node, one node at a time.
+elixir_app_restart *args:
+    ansible-playbook pb_elixir_app_restart.yml "$@"

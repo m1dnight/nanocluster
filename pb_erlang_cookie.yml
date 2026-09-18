@@ -1,7 +1,0 @@
----
-- name: Set the shared Erlang cookie on all nodes
-  hosts: nodes
-  gather_facts: false
-  become: true
-  roles:
-    - role: erlang_cookie

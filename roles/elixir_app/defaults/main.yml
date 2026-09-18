@@ -9,7 +9,7 @@ elixir_app_user: "{{ ansible_user | default('pi') }}"
 # Environment for the release; keys here override the generated defaults below.
 elixir_app_environment: {}
 elixir_app_node_name: "{{ elixir_app_name }}@{{ ansible_facts.hostname }}.localdomain"
-elixir_app_cookie: "{{ erlang_cookie_value | default('') }}"
+elixir_app_cookie: "{{ erlang_setup_cookie | default('') }}"
 elixir_app_config_dir: "/etc/{{ elixir_app_name }}"
 elixir_app_state_dir: "/var/lib/{{ elixir_app_name }}"
 elixir_app_systemd_dir: /etc/systemd/system

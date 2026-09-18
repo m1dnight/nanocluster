@@ -12,4 +12,12 @@ ssh_keys_public_key: >-
   christophe@bloempot
 
 
-erlang_cookie_value: nanoclustercookies
+erlang_setup_cookie: nanoclustercookies
+
+erlang_setup_hosts:
+  - nc1.localdomain
+  - nc2.localdomain
+  - nc3.localdomain
+  - nc4.localdomain
+  - nc5.localdomain
+  - nc6.localdomain

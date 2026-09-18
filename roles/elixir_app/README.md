@@ -27,7 +27,7 @@ Generated environment defaults, each overridable through `elixir_app_environment
 | `LANG` | `C.UTF-8` |
 | `RELEASE_DISTRIBUTION` | `name` |
 | `RELEASE_NODE` | `<name>@<hostname>.localdomain` |
-| `RELEASE_COOKIE` | `erlang_cookie_value` when defined |
+| `RELEASE_COOKIE` | `erlang_setup_cookie` when defined |
 | `RELEASE_TMP` | `/var/lib/<name>/tmp` |
 
 The service runs `bin/<launcher> start` in the foreground under systemd with

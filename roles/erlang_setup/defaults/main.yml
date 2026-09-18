@@ -1,0 +1,8 @@
+---
+erlang_setup_user: "{{ ansible_user | default('pi') }}"
+# Shared cookie; set it in inventory or a vault file.
+erlang_setup_cookie: ""
+# Inventory group whose nodes are listed in ~/.hosts.erlang, by their ansible_host.
+erlang_setup_hosts_group: nodes
+# Explicit host names for ~/.hosts.erlang; overrides the group when set.
+erlang_setup_hosts: []

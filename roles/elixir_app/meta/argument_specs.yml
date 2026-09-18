@@ -26,7 +26,7 @@ argument_specs:
         description: Default RELEASE_NODE, normally <name>@<hostname>.localdomain.
       elixir_app_cookie:
         type: str
-        description: Default RELEASE_COOKIE; taken from erlang_cookie_value when defined.
+        description: Default RELEASE_COOKIE; taken from erlang_setup_cookie when defined.
       elixir_app_config_dir:
         type: str
         description: Directory for the environment file and release marker.

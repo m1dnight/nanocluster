@@ -1,4 +1,4 @@
-"""Exercise cookie provisioning in temporary homes without connecting to Pis."""
+"""Exercise Erlang cookie and hosts file provisioning in temporary homes without connecting to Pis."""
 
 import os
 from pathlib import Path
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @unittest.skipUnless(shutil.which("ansible-playbook"), "ansible-playbook is required")
-class ErlangCookieTests(unittest.TestCase):
+class ErlangSetupTests(unittest.TestCase):
     def test_shared_cookie_permissions_repeat_rotation_and_hidden_output(self):
         with tempfile.TemporaryDirectory(prefix="nanocluster-cookie-test-") as tmp:
             directory = Path(tmp)
@@ -37,9 +37,10 @@ class ErlangCookieTests(unittest.TestCase):
             )
             getent.chmod(0o755)
             inventory = directory / "hosts.yml"
-            inventory.write_text(yaml.safe_dump({"all": {"hosts": {
-                home.name: {"cookie_test_home": str(home)} for home in homes
-            }}}))
+            inventory.write_text(yaml.safe_dump({"all": {"children": {"nodes": {"hosts": {
+                home.name: {"cookie_test_home": str(home), "ansible_host": f"{home.name}.test"}
+                for home in homes
+            }}}}}))
             playbook = directory / "test.yml"
             playbook.write_text(yaml.safe_dump([{
                 "name": "Exercise cookie provisioning in temporary homes",
@@ -49,13 +50,13 @@ class ErlangCookieTests(unittest.TestCase):
                 "become": False,
                 "vars": {
                     "ansible_python_interpreter": sys.executable,
-                    "erlang_cookie_user": account.pw_name,
+                    "erlang_setup_user": account.pw_name,
                 },
                 "environment": {
                     "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
                     "COOKIE_TEST_HOME": "{{ cookie_test_home }}",
                 },
-                "roles": [str(ROOT / "roles/erlang_cookie")],
+                "roles": [str(ROOT / "roles/erlang_setup")],
             }]))
             env = dict(os.environ, ANSIBLE_LOCAL_TEMP=str(directory / "ansible-tmp"),
                        ANSIBLE_REMOTE_TEMP=str(directory / "remote-tmp"),
@@ -63,7 +64,7 @@ class ErlangCookieTests(unittest.TestCase):
 
             def execute(cookie, success=True):
                 variables = directory / "vars.yml"
-                variables.write_text(yaml.safe_dump({"erlang_cookie_value": cookie}))
+                variables.write_text(yaml.safe_dump({"erlang_setup_cookie": cookie}))
                 result = subprocess.run(
                     ["ansible-playbook", "-i", str(inventory), str(playbook),
                      "--diff", "-e", "@" + str(variables)],
@@ -83,6 +84,9 @@ class ErlangCookieTests(unittest.TestCase):
                 self.assertEqual(stat.S_IMODE(metadata.st_mode), 0o400)
                 self.assertEqual(metadata.st_uid, account.pw_uid)
                 self.assertEqual(metadata.st_gid, account.pw_gid)
+                hosts_file = home / ".hosts.erlang"
+                self.assertEqual(hosts_file.read_text(), "'node1.test'.\n'node2.test'.\n")
+                self.assertEqual(stat.S_IMODE(hosts_file.stat().st_mode), 0o644)
             self.assertEqual(execute(original).count("changed=0"), 2)
             replacement = "test_cookie_002"
             self.assertNotIn(original, execute(replacement))

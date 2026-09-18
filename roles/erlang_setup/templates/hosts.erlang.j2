@@ -1,0 +1,3 @@
+{% for host in (erlang_setup_hosts if erlang_setup_hosts | length > 0 else erlang_setup_host_list) %}
+'{{ host }}'.
+{% endfor %}

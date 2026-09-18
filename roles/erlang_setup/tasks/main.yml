@@ -1,0 +1,49 @@
+---
+- name: Validate the shared cookie
+  ansible.builtin.assert:
+    that:
+      - "erlang_setup_cookie is match('^[!-~]{1,255}\\Z')"
+    fail_msg: The Erlang cookie must contain 1-255 printable ASCII characters without whitespace.
+  no_log: true
+
+- name: Look up the account's home and primary group
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ erlang_setup_user }}"
+    fail_key: true
+  register: erlang_setup_account
+
+- name: Resolve the account's home and group
+  ansible.builtin.set_fact:
+    erlang_setup_home: "{{ erlang_setup_account.ansible_facts.getent_passwd[erlang_setup_user][4] }}"
+    erlang_setup_group: "{{ erlang_setup_account.ansible_facts.getent_passwd[erlang_setup_user][2] }}"
+
+- name: Collect the cluster host names from the inventory group
+  ansible.builtin.set_fact:
+    erlang_setup_host_list: "{{ erlang_setup_host_list | default([]) + [hostvars[item].ansible_host | default(item)] }}"
+  loop: "{{ groups[erlang_setup_hosts_group] | default([]) }}"
+  when: erlang_setup_hosts | length == 0
+
+- name: Require at least one cluster host
+  ansible.builtin.assert:
+    that:
+      - (erlang_setup_hosts if erlang_setup_hosts | length > 0 else erlang_setup_host_list | default([])) | length > 0
+    fail_msg: "No hosts for ~/.hosts.erlang: set erlang_setup_hosts or use a non-empty erlang_setup_hosts_group."
+
+- name: Write the shared Erlang cookie
+  ansible.builtin.copy:
+    dest: "{{ erlang_setup_home }}/.erlang.cookie"
+    content: "{{ erlang_setup_cookie }}\n"
+    owner: "{{ erlang_setup_user }}"
+    group: "{{ erlang_setup_group }}"
+    mode: "0400"
+  no_log: true
+  diff: false
+
+- name: Write the Erlang hosts file
+  ansible.builtin.template:
+    src: hosts.erlang.j2
+    dest: "{{ erlang_setup_home }}/.hosts.erlang"
+    owner: "{{ erlang_setup_user }}"
+    group: "{{ erlang_setup_group }}"
+    mode: "0644"

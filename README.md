@@ -32,10 +32,11 @@ requirements.yml
 pb_setup.yml
 pb_fan_speed.yml
 pb_ssh_keys.yml
-pb_erlang_cookie.yml
+pb_erlang_setup.yml
 pb_sync.yml
 pb_mirror.yml
 pb_elixir_app.yml
+pb_elixir_app_restart.yml
 inventory/
   hosts.yml
   group_vars/
@@ -49,7 +50,7 @@ roles/
   cluster_ssh/
   fan_controller/
   ssh_keys/
-  erlang_cookie/
+  erlang_setup/
   sync/
   mirror/
   elixir_app/
@@ -70,10 +71,11 @@ installed by `just deps`.
 | `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale, installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir, and lets the nodes SSH to each other. |
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 | `just ssh_keys` | `pb_ssh_keys.yml` | Pis 1–6 | Adds a configured public SSH key to selected existing accounts. |
-| `just erlang_cookie` | `pb_erlang_cookie.yml` | Pis 1–6 | Writes the same Erlang cookie to the selected account's home. |
+| `just erlang_setup` | `pb_erlang_setup.yml` | Pis 1–6 | Writes the shared Erlang cookie and the cluster hosts file to the selected account's home. |
 | `just sync` | `pb_sync.yml` | Pis 1–6 | Mirrors a local folder to every node, deleting node files that are absent locally. |
 | `just mirror` | `pb_mirror.yml` | Pis 1–6 | Mirrors a directory from one node to all other nodes, deleting files absent on the source node. |
 | `just elixir_app` | `pb_elixir_app.yml` | Pis 1–6, one at a time | Runs an already unpacked Elixir release as a systemd service. |
+| `just elixir_app_restart` | `pb_elixir_app_restart.yml` | Pis 1–6, one at a time | Restarts that service without changing anything. |
 
 `just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -145,26 +147,30 @@ For a persistent setting, edit `inventory/group_vars/fan_controller.yml` and set
 `fan_controller_speed: 50`. Pin, frequency, and dependency packages are configurable
 as well; see the fan role README. Extra vars apply only to that invocation.
 
-## Shared Erlang cookie
+## Erlang cookie and hosts file
 
-Set `erlang_cookie_value` in `inventory/group_vars/all.yml`, then run:
+Set `erlang_setup_cookie` in `inventory/group_vars/all.yml`, then run:
 
 ```sh
-just erlang_cookie
+just erlang_setup
 ```
 
-This writes the same value to `/home/pi/.erlang.cookie` on all active nodes,
-owned by `pi` with mode `0400` (owner read only). Task output and diffs hide the
-cookie. Repeated runs reuse the configured value; changing it replaces the file.
-This is a separate playbook; run it after setup.
+This writes two files to `/home/pi` on all active nodes, owned by `pi`:
 
-`erlang_cookie_user` defaults to the SSH user (`pi`) and can target another
+- `.erlang.cookie` with the shared value, mode `0400` (owner read only). Task
+  output and diffs hide the cookie. Changing the value replaces the file.
+- `.hosts.erlang` listing every node in the `nodes` group by its inventory
+  address (`'nc1.localdomain'.` and so on), which `:net_adm.world/0` uses to
+  discover nodes. Start nodes as `app@nc1.localdomain` to match.
+
+This is a separate playbook; run it after setup and again after adding a node.
+`erlang_setup_user` defaults to the SSH user (`pi`) and can target another
 existing account. To keep the cookie out of tracked inventory, remove its inline
-value and supply `erlang_cookie_value` through an Ansible Vault vars file:
-`just erlang_cookie -e @cookie.vault --ask-vault-pass`.
+value and supply `erlang_setup_cookie` through an Ansible Vault vars file:
+`just erlang_setup -e @cookie.vault --ask-vault-pass`.
 
 Restart any running Erlang/Elixir nodes after changing their cookie; the role
-only writes the file. See [Erlang's authentication documentation](https://www.erlang.org/doc/system/distributed.html#security).
+only writes files. See [Erlang's authentication documentation](https://www.erlang.org/doc/system/distributed.html#security).
 
 ## Shared folder
 
@@ -220,7 +226,7 @@ elixir_app_environment:
 
 The role writes `/etc/myapp/env` with those variables plus generated defaults
 for clustering: `RELEASE_DISTRIBUTION=name`, `RELEASE_NODE=myapp@<hostname>.localdomain`,
-`RELEASE_COOKIE` from `erlang_cookie_value`, `RELEASE_TMP` under `/var/lib/myapp`,
+`RELEASE_COOKIE` from `erlang_setup_cookie`, `RELEASE_TMP` under `/var/lib/myapp`,
 and a UTF-8 `LANG`. Any of them can be overridden by key. The service runs as the
 SSH user by default (`elixir_app_user`) and must be able to read the release.
 
@@ -228,7 +234,8 @@ The play runs one node at a time so a clustered application keeps serving during
 restarts; pass `-e elixir_app_serial=6` to change that. A run restarts the
 service only when the unit, the environment, or the deployed release changed.
 Repoint the `current` symlink to a new version and re-run the play to roll it
-out. See the elixir_app role README for all options.
+out. To restart without changing anything, run `just elixir_app_restart`, which
+also goes one node at a time. See the elixir_app role README for all options.
 
 ## SSH key access
 
@@ -292,10 +299,11 @@ ansible-inventory --graph
 just setup --syntax-check
 just fan_speed --syntax-check
 just ssh_keys --syntax-check
-just erlang_cookie --syntax-check
+just erlang_setup --syntax-check
 just sync --syntax-check
 just mirror --syntax-check
 just elixir_app --syntax-check
+just elixir_app_restart --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline
@@ -305,8 +313,8 @@ python3 -m unittest discover -s tests -v
 The tests use simulated GPIO, a fake asdf executable, and temporary user homes.
 They cover fan argument validation and cleanup, and actual Ansible plugin tasks
 for installation, repeat runs, version changes, and preserving unrelated tools.
-Cookie tests cover shared values, ownership and permissions, repeat runs,
-rotation, invalid values, and hidden output even with `--diff`.
+Erlang setup tests cover shared cookies, the generated hosts file, ownership and
+permissions, repeat runs, rotation, invalid values, and hidden output even with `--diff`.
 Sync tests mirror temporary directories and cover deletion, excludes, repeat
 runs, and the guards against empty or missing sources and unsafe destinations.
 Mirror tests do the same for node-to-node copies without SSH, and cluster SSH

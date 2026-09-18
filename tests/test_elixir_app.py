@@ -67,7 +67,7 @@ class ElixirAppTests(unittest.TestCase):
                     "elixir_app_user": account.pw_name,
                     "elixir_app_node_name": "myapp@testhost.localdomain",
                     "elixir_app_manage_service": False,
-                    "erlang_cookie_value": "test_cookie_value",
+                    "erlang_setup_cookie": "test_cookie_value",
                 },
                 "environment": {"PATH": str(bin_dir) + os.pathsep + os.environ["PATH"]},
                 "roles": [str(ROOT / "roles/elixir_app")],

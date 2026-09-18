@@ -1,2 +1,0 @@
----
-erlang_cookie_user: "{{ ansible_user | default('pi') }}"
