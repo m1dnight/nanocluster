@@ -1,0 +1,4 @@
+---
+# This collection is local playbook code, not a separately released Galaxy package.
+skip_list:
+  - galaxy[no-changelog]
