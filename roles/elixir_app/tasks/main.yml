@@ -1,0 +1,124 @@
+---
+- name: Validate the application settings
+  ansible.builtin.assert:
+    that:
+      - "elixir_app_name is match('^[a-z][a-z0-9_-]{0,63}$')"
+      - "elixir_app_release_name is match('^[A-Za-z0-9_.-]+$')"
+      - elixir_app_release_path is match('^/')
+      - "'..' not in elixir_app_release_path.split('/')"
+      - elixir_app_user | length > 0
+      - elixir_app_restart_sec | int >= 0
+      - elixir_app_stop_timeout_sec | int > 0
+      - elixir_app_limit_nofile | int > 0
+    fail_msg: Set elixir_app_name (lowercase service name) and an absolute elixir_app_release_path.
+
+- name: Validate the environment variable names and values
+  ansible.builtin.assert:
+    that:
+      - elixir_app_environment.keys() | reject('match', '^[A-Za-z_][A-Za-z0-9_]*$') | list | length == 0
+      - elixir_app_environment.values() | map('string') | select('search', '\n') | list | length == 0
+    fail_msg: Environment keys must be shell identifiers and values must be single lines.
+  no_log: true
+
+- name: Look up the service account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ elixir_app_user }}"
+    fail_key: true
+  register: elixir_app_account
+
+- name: Check the release directory
+  ansible.builtin.stat:
+    path: "{{ elixir_app_release_path }}"
+    follow: false
+  register: elixir_app_release_dir
+
+- name: Check the release launcher
+  ansible.builtin.stat:
+    path: "{{ elixir_app_release_path }}/bin/{{ elixir_app_release_name }}"
+  register: elixir_app_launcher
+
+- name: Require an executable release launcher
+  ansible.builtin.assert:
+    that:
+      - elixir_app_launcher.stat.exists
+      - elixir_app_launcher.stat.executable
+    fail_msg: "No executable {{ elixir_app_release_path }}/bin/{{ elixir_app_release_name }}; unpack the release there first."
+
+- name: Check the release version marker
+  ansible.builtin.stat:
+    path: "{{ elixir_app_release_path }}/releases/start_erl.data"
+  register: elixir_app_version_marker
+
+- name: Read the release version marker
+  ansible.builtin.slurp:
+    src: "{{ elixir_app_release_path }}/releases/start_erl.data"
+  register: elixir_app_version_data
+  when: elixir_app_version_marker.stat.exists
+
+- name: Resolve the release location and version
+  ansible.builtin.set_fact:
+    elixir_app_group: "{{ elixir_app_account.ansible_facts.getent_passwd[elixir_app_user][2] }}"
+    elixir_app_release_stamp: >-
+      {{ elixir_app_release_dir.stat.lnk_source | default(elixir_app_release_path) }}
+      {{ (elixir_app_version_data.content | b64decode | trim) if elixir_app_version_marker.stat.exists else 'unversioned' }}
+    elixir_app_merged_environment: >-
+      {{ {
+        'LANG': 'C.UTF-8',
+        'RELEASE_DISTRIBUTION': 'name',
+        'RELEASE_NODE': elixir_app_node_name,
+        'RELEASE_TMP': elixir_app_state_dir ~ '/tmp',
+      } | combine({'RELEASE_COOKIE': elixir_app_cookie} if elixir_app_cookie | length > 0 else {})
+        | combine(elixir_app_environment) }}
+  no_log: true
+
+- name: Create the configuration directory
+  ansible.builtin.file:
+    path: "{{ elixir_app_config_dir }}"
+    state: directory
+    group: "{{ elixir_app_group }}"
+    mode: "0750"
+
+- name: Create the writable state directory
+  ansible.builtin.file:
+    path: "{{ elixir_app_state_dir }}/tmp"
+    state: directory
+    owner: "{{ elixir_app_user }}"
+    group: "{{ elixir_app_group }}"
+    mode: "0750"
+
+- name: Write the environment file
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ elixir_app_config_dir }}/env"
+    group: "{{ elixir_app_group }}"
+    mode: "0640"
+  no_log: true
+  diff: false
+  notify: Restart the Elixir application
+
+- name: Install the systemd unit
+  ansible.builtin.template:
+    src: systemd.service.j2
+    dest: "{{ elixir_app_systemd_dir }}/{{ elixir_app_name }}.service"
+    mode: "0644"
+  notify: Restart the Elixir application
+
+# Changes when the release symlink is repointed or a new version is unpacked.
+- name: Record the deployed release
+  ansible.builtin.copy:
+    dest: "{{ elixir_app_config_dir }}/release"
+    content: "{{ elixir_app_release_stamp | trim }}\n"
+    mode: "0644"
+  notify: Restart the Elixir application
+
+- name: Apply application changes before checking the service
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start the service
+  ansible.builtin.systemd_service:
+    name: "{{ elixir_app_name }}"
+    daemon_reload: true
+    enabled: "{{ elixir_app_enabled }}"
+    state: "{{ elixir_app_state }}"
+  when: elixir_app_manage_service

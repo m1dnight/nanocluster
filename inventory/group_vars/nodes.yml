@@ -8,6 +8,7 @@ go_checksum: "b00b694903d126c588c378e72d3545549935d3982635ba3f7a964c9fa23fe3b9"
 packages_add_list:
   - git
   - rsync
+  - just
   - tmux
   - emacs-nox
   - nfs-common
@@ -50,3 +51,18 @@ sync_destination: /home/pi/distexample
 sync_excludes:
   - .DS_Store
   - _build
+
+# Elixir release run as a systemd service by `just elixir_app`. Unpack the release
+# on each node first; the path is usually a symlink to the active version.
+elixir_app_name: distexample
+elixir_app_release_path: /home/pi/distexample/_build/prod/rel/distexample/
+elixir_app_environment:
+  PHX_SERVER: "true"
+  PORT: "4000"
+
+# Directory mirrored from one node to all others by `just mirror`. Files absent on
+# the source node are deleted elsewhere. The source node gets an SSH key for this.
+mirror_source_host: nanocluster1
+mirror_source_path: /home/pi/distexample
+mirror_excludes:
+  - .DS_Store

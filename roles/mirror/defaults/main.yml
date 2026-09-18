@@ -1,0 +1,17 @@
+---
+# Inventory name of the node that holds the master copy.
+mirror_source_host: ""
+# Absolute directory on the source host whose contents are mirrored.
+mirror_source_path: ""
+# Absolute directory on every other node; defaults to the same path as the source.
+mirror_destination: "{{ mirror_source_path }}"
+mirror_delete: true
+mirror_excludes: []
+mirror_allow_empty_source: false
+mirror_rsync_opts: []
+# Account rsync logs in as on the other nodes; SSH access comes from the cluster_ssh role.
+mirror_user: "{{ ansible_user | default('pi') }}"
+# Address the source host uses to reach each node: the inventory address.
+mirror_address: "{{ ansible_host | default(inventory_hostname) }}"
+# Set to false to copy locally without SSH (used by the tests).
+mirror_ssh: true

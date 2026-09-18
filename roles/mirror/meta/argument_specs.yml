@@ -1,0 +1,44 @@
+---
+argument_specs:
+  main:
+    short_description: Mirror a directory from one node to every other node with rsync
+    options:
+      mirror_source_host:
+        type: str
+        required: true
+        description: Inventory hostname of the node holding the master copy.
+      mirror_source_path:
+        type: str
+        required: true
+        description: Absolute directory on the source host whose contents are mirrored.
+      mirror_destination:
+        type: str
+        description: Absolute directory on every other node. Defaults to the source path.
+      mirror_delete:
+        type: bool
+        default: true
+        description: Remove files under the destination that do not exist on the source host.
+      mirror_excludes:
+        type: list
+        elements: str
+        default: []
+        description: rsync exclude patterns. Excluded paths are neither copied nor deleted.
+      mirror_allow_empty_source:
+        type: bool
+        default: false
+        description: Allow an empty source folder, which clears the other nodes' copies.
+      mirror_rsync_opts:
+        type: list
+        elements: str
+        default: []
+        description: Extra rsync options, for example --dry-run.
+      mirror_user:
+        type: str
+        description: Account rsync logs in as on the other nodes.
+      mirror_address:
+        type: str
+        description: Address the source host uses to reach each node; defaults to the inventory ansible_host.
+      mirror_ssh:
+        type: bool
+        default: true
+        description: When false, copy locally without SSH (tests only).

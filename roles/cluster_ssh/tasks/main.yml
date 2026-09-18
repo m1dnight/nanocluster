@@ -1,0 +1,57 @@
+---
+- name: Create the SSH directory
+  ansible.builtin.file:
+    path: "{{ cluster_ssh_directory }}"
+    state: directory
+    mode: "0700"
+
+- name: Generate this node's key when missing
+  ansible.builtin.command:
+    argv:
+      - ssh-keygen
+      - -q
+      - -t
+      - ed25519
+      - -N
+      - ""
+      - -C
+      - "{{ cluster_ssh_user }}@{{ inventory_hostname }}"
+      - -f
+      - "{{ cluster_ssh_key_file }}"
+    creates: "{{ cluster_ssh_key_file }}"
+
+- name: Read this node's public key
+  ansible.builtin.slurp:
+    src: "{{ cluster_ssh_key_file }}.pub"
+  register: cluster_ssh_public_key_file
+
+- name: Read this node's host key
+  ansible.builtin.slurp:
+    src: "{{ cluster_ssh_host_key_file }}"
+  register: cluster_ssh_host_key_content
+
+# Facts so that every other node in the play can read them through hostvars.
+- name: Publish this node's keys and address
+  ansible.builtin.set_fact:
+    cluster_ssh_public_key: "{{ cluster_ssh_public_key_file.content | b64decode | trim }}"
+    cluster_ssh_host_key: "{{ cluster_ssh_host_key_content.content | b64decode | trim | split(' ') | slice(2) | first | join(' ') }}"
+    cluster_ssh_node_address: "{{ cluster_ssh_address }}"
+
+- name: Authorize every node's key on this node
+  ansible.posix.authorized_key:
+    user: "{{ cluster_ssh_user }}"
+    key: "{{ hostvars[item].cluster_ssh_public_key }}"
+    path: "{{ cluster_ssh_directory }}/authorized_keys"
+    manage_dir: false
+    state: present
+  loop: "{{ cluster_ssh_hosts }}"
+  when: hostvars[item].cluster_ssh_public_key is defined
+
+- name: Trust every node's host key on this node
+  ansible.builtin.known_hosts:
+    name: "{{ hostvars[item].cluster_ssh_node_address }}"
+    key: "{{ hostvars[item].cluster_ssh_node_address }} {{ hostvars[item].cluster_ssh_host_key }}"
+    path: "{{ cluster_ssh_directory }}/known_hosts"
+    state: present
+  loop: "{{ cluster_ssh_hosts }}"
+  when: hostvars[item].cluster_ssh_host_key is defined

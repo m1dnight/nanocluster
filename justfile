@@ -27,3 +27,11 @@ erlang_cookie *args:
 # Mirror the configured local folder to every node, deleting node files absent locally.
 sync *args:
     ansible-playbook pb_sync.yml "$@"
+
+# Install or update the systemd service for the configured Elixir release on every node.
+elixir_app *args:
+    ansible-playbook pb_elixir_app.yml "$@"
+
+# Mirror a directory from the configured source node to every other node, deleting files absent on the source.
+mirror *args:
+    ansible-playbook pb_mirror.yml "$@"

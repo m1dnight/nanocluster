@@ -1,0 +1,23 @@
+---
+# Service and unit name; also the default release launcher name.
+elixir_app_name: ""
+# Directory on the node that contains bin/<launcher>, usually a symlink to the active version.
+elixir_app_release_path: ""
+elixir_app_release_name: "{{ elixir_app_name }}"
+# Existing account that runs the service. It must be able to read the release.
+elixir_app_user: "{{ ansible_user | default('pi') }}"
+# Environment for the release; keys here override the generated defaults below.
+elixir_app_environment: {}
+elixir_app_node_name: "{{ elixir_app_name }}@{{ ansible_facts.hostname }}.localdomain"
+elixir_app_cookie: "{{ erlang_cookie_value | default('') }}"
+elixir_app_config_dir: "/etc/{{ elixir_app_name }}"
+elixir_app_state_dir: "/var/lib/{{ elixir_app_name }}"
+elixir_app_systemd_dir: /etc/systemd/system
+elixir_app_restart: on-failure
+elixir_app_restart_sec: 5
+elixir_app_stop_timeout_sec: 30
+elixir_app_limit_nofile: 65536
+elixir_app_enabled: true
+elixir_app_state: started
+# Set to false to only render files (used by the tests and for inspection).
+elixir_app_manage_service: true

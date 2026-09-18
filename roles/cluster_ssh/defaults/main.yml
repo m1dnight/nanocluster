@@ -1,0 +1,9 @@
+---
+cluster_ssh_user: "{{ ansible_user | default('pi') }}"
+cluster_ssh_directory: "{{ ansible_facts['user_dir'] | default('/home/' ~ cluster_ssh_user) }}/.ssh"
+cluster_ssh_key_file: "{{ cluster_ssh_directory }}/id_ed25519"
+cluster_ssh_host_key_file: /etc/ssh/ssh_host_ed25519_key.pub
+# Name the other nodes use to reach this node: the inventory address.
+cluster_ssh_address: "{{ ansible_host | default(inventory_hostname) }}"
+# Nodes that trust each other: every host in the current play.
+cluster_ssh_hosts: "{{ ansible_play_hosts_all }}"

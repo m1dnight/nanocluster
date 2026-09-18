@@ -34,6 +34,8 @@ pb_fan_speed.yml
 pb_ssh_keys.yml
 pb_erlang_cookie.yml
 pb_sync.yml
+pb_mirror.yml
+pb_elixir_app.yml
 inventory/
   hosts.yml
   group_vars/
@@ -44,10 +46,13 @@ roles/
   locales/
   packages/
   asdf/
+  cluster_ssh/
   fan_controller/
   ssh_keys/
   erlang_cookie/
   sync/
+  mirror/
+  elixir_app/
 tests/
 .github/workflows/
 ```
@@ -62,11 +67,13 @@ installed by `just deps`.
 
 | Command | Playbook | Hosts | Behavior |
 | --- | --- | --- | --- |
-| `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale and installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir. |
+| `just setup` | `pb_setup.yml` | Pis 1–6 | Generates the SSH locale, installs common packages, Go 1.25.5, asdf v0.18.0, Erlang, and Elixir, and lets the nodes SSH to each other. |
 | `just fan_speed` | `pb_fan_speed.yml` | Pi 1 | Installs the GPIO dependency and starts/enables the shared fan service at the configured speed. |
 | `just ssh_keys` | `pb_ssh_keys.yml` | Pis 1–6 | Adds a configured public SSH key to selected existing accounts. |
 | `just erlang_cookie` | `pb_erlang_cookie.yml` | Pis 1–6 | Writes the same Erlang cookie to the selected account's home. |
 | `just sync` | `pb_sync.yml` | Pis 1–6 | Mirrors a local folder to every node, deleting node files that are absent locally. |
+| `just mirror` | `pb_mirror.yml` | Pis 1–6 | Mirrors a directory from one node to all other nodes, deleting files absent on the source node. |
+| `just elixir_app` | `pb_elixir_app.yml` | Pis 1–6, one at a time | Runs an already unpacked Elixir release as a systemd service. |
 
 `just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -84,7 +91,7 @@ Without `just`, run `ansible-playbook pb_setup.yml` or `ansible-playbook pb_fan_
 ### Common packages and runtimes
 
 `inventory/group_vars/nodes.yml` defines the package and language lists. Packages
-include Git, tmux, Emacs, NFS client utilities, disk/network tools, and the build,
+include Git, rsync, just, tmux, Emacs, NFS client utilities, disk/network tools, and the build,
 SSL, wxWidgets, and documentation libraries used to compile Erlang.
 
 The Go dependency runs with sudo and installs into `/usr/local/go`. asdf and its
@@ -109,6 +116,20 @@ just setup \
 
 Add `--limit nanocluster2` to maintain one node at a time. OS package maintenance
 does not automatically reboot for kernel upgrades.
+
+### SSH between nodes
+
+Setup ends with the `cluster_ssh` role: every node gets a passphrase-less
+`~/.ssh/id_ed25519` for `pi` if it has none, every node's public key is added to
+every node's `authorized_keys`, and every node's host key is pinned in
+`known_hosts` under its inventory address (`nc2.localdomain` and so on), which
+the nodes resolve through the router's DNS. Afterwards `ssh nc2.localdomain`
+works from any node without prompts, which `just mirror` relies on. Only nodes in the play
+exchange keys, so re-run setup after adding a node. Run this step alone with:
+
+```sh
+just setup --tags cluster_ssh
+```
 
 ### Shared fan
 
@@ -164,6 +185,50 @@ destination is `/`, a top-level directory, or a home directory. To intentionally
 clear the nodes' copies, empty the local folder and pass
 `-e sync_allow_empty_source=true`. macOS's built-in rsync is sufficient; the
 nodes get rsync from the common package list. See the sync role README.
+
+## Mirror between nodes
+
+`just mirror` copies a directory from one node to all other nodes without going
+through this computer: rsync runs on the source node and pushes to each peer.
+Files on the other nodes that the source node no longer has are **deleted**.
+The defaults in `inventory/group_vars/nodes.yml` mirror `/home/pi/shared` from
+`nanocluster1` to the same path elsewhere (`mirror_source_host`,
+`mirror_source_path`, optional `mirror_destination`, `mirror_excludes`).
+
+SSH access between nodes comes from `just setup` (see "SSH between nodes"),
+so run setup first. The same guards as `just sync` apply, and a preview works the
+same way:
+
+```sh
+just mirror -e '{"mirror_rsync_opts": ["--dry-run"]}'
+```
+
+## Elixir release as a service
+
+`just elixir_app` installs a systemd unit for an Elixir release that is already
+unpacked on each node, for example after `mix release` and copying the tarball
+with `just sync`. Set at least the service name and the release directory in
+`inventory/group_vars/nodes.yml`; a commented example is included there:
+
+```yaml
+elixir_app_name: myapp
+elixir_app_release_path: /opt/myapp/current
+elixir_app_environment:
+  PHX_SERVER: "true"
+  PORT: "4000"
+```
+
+The role writes `/etc/myapp/env` with those variables plus generated defaults
+for clustering: `RELEASE_DISTRIBUTION=name`, `RELEASE_NODE=myapp@<hostname>.localdomain`,
+`RELEASE_COOKIE` from `erlang_cookie_value`, `RELEASE_TMP` under `/var/lib/myapp`,
+and a UTF-8 `LANG`. Any of them can be overridden by key. The service runs as the
+SSH user by default (`elixir_app_user`) and must be able to read the release.
+
+The play runs one node at a time so a clustered application keeps serving during
+restarts; pass `-e elixir_app_serial=6` to change that. A run restarts the
+service only when the unit, the environment, or the deployed release changed.
+Repoint the `current` symlink to a new version and re-run the play to roll it
+out. See the elixir_app role README for all options.
 
 ## SSH key access
 
@@ -229,6 +294,8 @@ just fan_speed --syntax-check
 just ssh_keys --syntax-check
 just erlang_cookie --syntax-check
 just sync --syntax-check
+just mirror --syntax-check
+just elixir_app --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline
@@ -242,4 +309,8 @@ Cookie tests cover shared values, ownership and permissions, repeat runs,
 rotation, invalid values, and hidden output even with `--diff`.
 Sync tests mirror temporary directories and cover deletion, excludes, repeat
 runs, and the guards against empty or missing sources and unsafe destinations.
+Mirror tests do the same for node-to-node copies without SSH, and cluster SSH
+tests exchange generated keys between temporary directories.
+Elixir app tests render the unit and environment files for a fake release and
+cover defaults, overrides, quoting, repeat runs, version changes, and validation.
 They do not validate physical wiring or OS package availability on the Pis.

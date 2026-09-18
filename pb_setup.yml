@@ -19,3 +19,6 @@
       become: true
 
     - role: asdf
+
+    - role: cluster_ssh
+      tags: [cluster_ssh]

@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Give every node an SSH key and let all nodes log in to each other
+    options:
+      cluster_ssh_user:
+        type: str
+        description: Account on every node that owns the key and accepts the other nodes' keys.
+      cluster_ssh_directory:
+        type: str
+        description: The account's .ssh directory.
+      cluster_ssh_key_file:
+        type: str
+        description: Private key path; generated without a passphrase when missing.
+      cluster_ssh_host_key_file:
+        type: str
+        description: Public host key of this node, pinned in every node's known_hosts.
+      cluster_ssh_address:
+        type: str
+        description: Name the other nodes use to reach this node; defaults to the inventory ansible_host.
+      cluster_ssh_hosts:
+        type: list
+        elements: str
+        description: Inventory hostnames that trust each other; defaults to all hosts in the play.

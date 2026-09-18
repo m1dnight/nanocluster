@@ -1,0 +1,8 @@
+---
+- name: Run the Elixir release as a systemd service on all nodes
+  hosts: nodes
+  become: true
+  # One node at a time so a clustered application keeps serving during restarts.
+  serial: "{{ elixir_app_serial | default(1) }}"
+  roles:
+    - role: elixir_app

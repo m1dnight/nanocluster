@@ -1,0 +1,100 @@
+---
+- name: Require a known source host, a source path, and a destination
+  ansible.builtin.assert:
+    that:
+      - mirror_source_host | length > 0
+      - mirror_source_host in hostvars
+      - mirror_source_path | trim | length > 0
+      - mirror_destination | trim | length > 0
+    fail_msg: Set mirror_source_host (an inventory hostname) and mirror_source_path in inventory/group_vars/nodes.yml.
+
+- name: Normalize both paths
+  ansible.builtin.set_fact:
+    mirror_source_dir: "{{ mirror_source_path | trim | regex_replace('/+$', '') }}"
+    mirror_destination_dir: "{{ mirror_destination | trim | regex_replace('/+$', '') }}"
+
+# With delete enabled, everything under the destination that is not on the
+# source host is removed. Refuse locations where that would destroy a system.
+- name: Refuse unsafe paths
+  ansible.builtin.assert:
+    that:
+      - mirror_source_dir is match('^/')
+      - "'..' not in mirror_source_dir.split('/')"
+      - mirror_destination_dir is match('^/')
+      - mirror_destination_dir is not match('^/[^/]*$')
+      - mirror_destination_dir is not match('^/home/[^/]+$')
+      - mirror_destination_dir is not match('^/root$')
+      - "'..' not in mirror_destination_dir.split('/')"
+    fail_msg: >-
+      mirror_source_path must be absolute and mirror_destination must be an absolute path to a dedicated
+      directory such as /home/pi/shared, not the root, a top-level directory, or a home directory.
+
+- name: Check the source folder on the source host
+  ansible.builtin.stat:
+    path: "{{ mirror_source_dir }}"
+  delegate_to: "{{ mirror_source_host }}"
+  run_once: true
+  register: mirror_source_stat
+
+- name: Require the source to be an existing directory
+  ansible.builtin.assert:
+    that:
+      - mirror_source_stat.stat.exists
+      - mirror_source_stat.stat.isdir
+    fail_msg: "{{ mirror_source_dir }} is not a directory on {{ mirror_source_host }}."
+
+- name: List the top level of the source folder
+  ansible.builtin.find:
+    paths: "{{ mirror_source_dir }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  delegate_to: "{{ mirror_source_host }}"
+  run_once: true
+  register: mirror_source_entries
+  when: not mirror_allow_empty_source
+
+# An empty source would wipe every other node's copy.
+- name: Refuse to mirror an empty source unless explicitly allowed
+  ansible.builtin.assert:
+    that:
+      - mirror_source_entries.matched > 0
+    fail_msg: "{{ mirror_source_dir }} on {{ mirror_source_host }} is empty; set mirror_allow_empty_source=true to clear the other nodes."
+  when: not mirror_allow_empty_source
+
+- name: Check the destination directory
+  ansible.builtin.stat:
+    path: "{{ mirror_destination_dir }}"
+  register: mirror_destination_stat
+  when: inventory_hostname != mirror_source_host
+
+# Only on first creation: afterwards rsync --archive applies the source directory's permissions.
+- name: Create the destination directory
+  ansible.builtin.file:
+    path: "{{ mirror_destination_dir }}"
+    state: directory
+    mode: "0755"
+  when: inventory_hostname != mirror_source_host and not mirror_destination_stat.stat.exists
+
+- name: Build the rsync command
+  ansible.builtin.set_fact:
+    mirror_rsync_argv: >-
+      {{ ['rsync', '--archive', '--out-format=%i %n']
+         + (['--delete'] if mirror_delete else [])
+         + (mirror_excludes | map('regex_replace', '^', '--exclude=') | list)
+         + mirror_rsync_opts
+         + (['-e', 'ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new'] if mirror_ssh else [])
+         + [mirror_source_dir ~ '/',
+            ((mirror_user ~ '@' ~ mirror_address ~ ':') if mirror_ssh else '') ~ mirror_destination_dir ~ '/'] }}
+  when: inventory_hostname != mirror_source_host
+
+# Runs on the source host and pushes to this node over the SSH trust set up by
+# the cluster_ssh role. Pass --dry-run through mirror_rsync_opts to preview;
+# check mode skips the transfer.
+- name: Mirror the folder from the source host to this node
+  ansible.builtin.command:
+    argv: "{{ mirror_rsync_argv }}"
+  delegate_to: "{{ mirror_source_host }}"
+  register: mirror_result
+  changed_when: mirror_result.stdout | length > 0 and '--dry-run' not in mirror_rsync_opts
+  when: inventory_hostname != mirror_source_host and not ansible_check_mode

@@ -60,11 +60,18 @@
     fail_msg: "sync_source {{ sync_source_path }} is empty; set sync_allow_empty_source=true to clear the nodes' copies."
   when: not sync_allow_empty_source
 
+- name: Check the destination directory
+  ansible.builtin.stat:
+    path: "{{ sync_destination_path }}"
+  register: sync_destination_stat
+
+# Only on first creation: afterwards rsync --archive applies the source directory's permissions.
 - name: Create the destination directory
   ansible.builtin.file:
     path: "{{ sync_destination_path }}"
     state: directory
     mode: "0755"
+  when: not sync_destination_stat.stat.exists
 
 - name: Mirror the source folder to the destination
   ansible.posix.synchronize:

@@ -1,0 +1,5 @@
+---
+- name: Mirror a directory from the source node to all other nodes
+  hosts: nodes
+  roles:
+    - role: mirror

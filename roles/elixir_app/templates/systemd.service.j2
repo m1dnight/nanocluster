@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ elixir_app_name }} Elixir release
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User={{ elixir_app_user }}
+Group={{ elixir_app_group }}
+WorkingDirectory={{ elixir_app_release_path }}
+EnvironmentFile={{ elixir_app_config_dir }}/env
+ExecStart={{ elixir_app_release_path }}/bin/{{ elixir_app_release_name }} start
+ExecStop={{ elixir_app_release_path }}/bin/{{ elixir_app_release_name }} stop
+KillSignal=SIGTERM
+TimeoutStopSec={{ elixir_app_stop_timeout_sec }}
+Restart={{ elixir_app_restart }}
+RestartSec={{ elixir_app_restart_sec }}
+LimitNOFILE={{ elixir_app_limit_nofile }}
+
+[Install]
+WantedBy=multi-user.target

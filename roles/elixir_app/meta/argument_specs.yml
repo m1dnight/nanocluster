@@ -1,0 +1,60 @@
+---
+argument_specs:
+  main:
+    short_description: Run an already unpacked Elixir release as a systemd service
+    options:
+      elixir_app_name:
+        type: str
+        required: true
+        description: Service name (lowercase); also the default launcher name under bin/.
+      elixir_app_release_path:
+        type: str
+        required: true
+        description: Absolute directory on the node containing the unpacked release (bin/, releases/).
+      elixir_app_release_name:
+        type: str
+        description: Launcher name under bin/ when it differs from the service name.
+      elixir_app_user:
+        type: str
+        description: Existing account that runs the service and must be able to read the release.
+      elixir_app_environment:
+        type: dict
+        default: {}
+        description: Environment variables for the release; override generated defaults by key.
+      elixir_app_node_name:
+        type: str
+        description: Default RELEASE_NODE, normally <name>@<hostname>.localdomain.
+      elixir_app_cookie:
+        type: str
+        description: Default RELEASE_COOKIE; taken from erlang_cookie_value when defined.
+      elixir_app_config_dir:
+        type: str
+        description: Directory for the environment file and release marker.
+      elixir_app_state_dir:
+        type: str
+        description: Writable directory owned by the service account; RELEASE_TMP lives under it.
+      elixir_app_systemd_dir:
+        type: str
+        description: Where the unit file is written.
+      elixir_app_restart:
+        type: str
+        description: systemd Restart= policy.
+      elixir_app_restart_sec:
+        type: int
+        description: systemd RestartSec= in seconds.
+      elixir_app_stop_timeout_sec:
+        type: int
+        description: systemd TimeoutStopSec= in seconds.
+      elixir_app_limit_nofile:
+        type: int
+        description: systemd LimitNOFILE=.
+      elixir_app_enabled:
+        type: bool
+        description: Enable the unit at boot.
+      elixir_app_state:
+        type: str
+        choices: [started, stopped]
+        description: Desired service state after the run.
+      elixir_app_manage_service:
+        type: bool
+        description: When false, only render files and skip systemd.

@@ -1,0 +1,7 @@
+---
+- name: Restart the Elixir application
+  ansible.builtin.systemd_service:
+    name: "{{ elixir_app_name }}"
+    daemon_reload: true
+    state: restarted
+  when: elixir_app_manage_service and elixir_app_state == 'started'

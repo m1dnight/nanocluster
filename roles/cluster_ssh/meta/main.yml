@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: Christophe De Troyer
+  description: Give every node an SSH key and let all nodes log in to each other
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.17"
+dependencies: []
