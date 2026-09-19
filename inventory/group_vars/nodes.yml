@@ -60,6 +60,7 @@ elixir_app_release_path: /home/pi/distexample/_build/prod/rel/distexample/
 elixir_app_environment:
   PHX_SERVER: "true"
   PORT: "4000"
+  MULTICAST_IF: "{{ ansible_facts.default_ipv4.address }}"
 
 # Directory mirrored from one node to all others by `just mirror`. Files absent on
 # the source node are deleted elsewhere. The source node gets an SSH key for this.
