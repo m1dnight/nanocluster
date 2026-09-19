@@ -14,10 +14,4 @@ ssh_keys_public_key: >-
 
 erlang_setup_cookie: nanoclustercookies
 
-erlang_setup_hosts:
-  - nc1.localdomain
-  - nc2.localdomain
-  - nc3.localdomain
-  - nc4.localdomain
-  - nc5.localdomain
-  - nc6.localdomain
+erlang_setup_hosts: "{{ groups['nodes'] | map('extract', hostvars, 'ansible_host') | list }}"
