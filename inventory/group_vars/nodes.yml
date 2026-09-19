@@ -55,6 +55,7 @@ sync_excludes:
 # Elixir release run as a systemd service by `just elixir_app`. Unpack the release
 # on each node first; the path is usually a symlink to the active version.
 elixir_app_name: distexample
+elixir_app_node_name: "{{ elixir_app_name }}@{{ ansible_facts.hostname }}.localdomain"
 elixir_app_release_path: /home/pi/distexample/_build/prod/rel/distexample/
 elixir_app_environment:
   PHX_SERVER: "true"
