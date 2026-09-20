@@ -37,6 +37,8 @@ pb_sync.yml
 pb_mirror.yml
 pb_elixir_app.yml
 pb_elixir_app_restart.yml
+pb_elixir_app_stop.yml
+pb_run_script.yml
 inventory/
   hosts.yml
   group_vars/
@@ -76,6 +78,8 @@ installed by `just deps`.
 | `just mirror` | `pb_mirror.yml` | Pis 1–6 | Mirrors a directory from one node to all other nodes, deleting files absent on the source node. |
 | `just elixir_app` | `pb_elixir_app.yml` | Pis 1–6, one at a time | Runs an already unpacked Elixir release as a systemd service. |
 | `just elixir_app_restart` | `pb_elixir_app_restart.yml` | Pis 1–6, one at a time | Restarts that service without changing anything. |
+| `just elixir_app_stop` | `pb_elixir_app_stop.yml` | Pis 1–6 | Stops the service; its boot enablement stays unchanged. |
+| `just run_script ./script.sh` | `pb_run_script.yml` | Pis 1–6 | Transfers and runs a local Bash script, showing output per node. |
 
 `just` lists available commands. All playbook recipes accept additional Ansible arguments,
 including quoted values with spaces:
@@ -89,6 +93,28 @@ just fan_speed -e fan_controller_speed=50
 On first provisioning, run `just fan_speed` before `just setup` so cooling is
 active during language compilation. Setup itself does not configure the fan.
 Without `just`, run `ansible-playbook pb_setup.yml` or `ansible-playbook pb_fan_speed.yml`.
+
+### Run a script on the nodes
+
+Save your Bash script locally, then run:
+
+```sh
+just run_script ./script.sh
+just run_script ./remove-service.sh --become
+just run_script ./script.sh --limit nanocluster2
+```
+
+The script runs as the SSH user (`pi`) unless you add `--become` for root.
+Add `--ask-become-pass` if sudo requires a password. Paths containing spaces
+must be quoted. Arguments after the script path are Ansible options.
+Relative paths are resolved from the repository root.
+
+Ansible transfers the script temporarily and executes it with `/bin/bash` on
+each selected node. It need not be executable locally. Every invocation runs
+the script again; a nonzero exit reports failure for that node. Use `set -euo
+pipefail` inside your script if it should stop on failed commands. `--check`
+skips execution. No services are removed until you supply and run a script
+that does so.
 
 ### Common packages and runtimes
 
@@ -304,6 +330,8 @@ just sync --syntax-check
 just mirror --syntax-check
 just elixir_app --syntax-check
 just elixir_app_restart --syntax-check
+just elixir_app_stop --syntax-check
+just run_script ./script.sh --syntax-check
 just setup --list-hosts
 just fan_speed --list-hosts
 ansible-lint --offline

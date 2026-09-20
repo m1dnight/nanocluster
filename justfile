@@ -39,3 +39,11 @@ mirror *args:
 # Restart the configured Elixir release service on every node, one node at a time.
 elixir_app_restart *args:
     ansible-playbook -f 10 pb_elixir_app_restart.yml "$@"
+
+# Stop the configured Elixir release service on every node.
+elixir_app_stop *args:
+    ansible-playbook -f 10 pb_elixir_app_stop.yml "$@"
+
+# Run a local Bash script on every node; add --become to run as root.
+run_script script *args:
+    script_path="$1"; shift; NANOCLUSTER_SCRIPT="$script_path" ansible-playbook -f 10 pb_run_script.yml "$@"

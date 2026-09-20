@@ -1,0 +1,27 @@
+---
+- name: Run a local Bash script on all nodes
+  hosts: nanocluster1
+  become: true
+  gather_facts: false
+  vars:
+    run_script_path: "{{ lookup('ansible.builtin.env', 'NANOCLUSTER_SCRIPT') }}"
+  tasks:
+    - name: Require an existing script on the controller
+      ansible.builtin.assert:
+        that:
+          - run_script_path | length > 0
+          - run_script_path is file
+        fail_msg: "Provide a local script: just run_script ./script.sh"
+
+    - name: Transfer and run the script with Bash
+      ansible.builtin.script:
+        cmd: "{{ run_script_path | quote }}"
+        executable: /bin/bash
+      register: run_script_result
+      # Arbitrary scripts run on every invocation; their changes cannot be inferred.
+      changed_when: true
+
+    - name: Show script output
+      ansible.builtin.debug:
+        var: run_script_result.stdout_lines
+      when: not (run_script_result.skipped | default(false))
