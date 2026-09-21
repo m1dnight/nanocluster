@@ -64,6 +64,7 @@ elixir_app_environment:
   ERL_AFLAGS: "-kernel shell_history enabled"
   SECRET_KEY_BASE: FmhfdEEC4s7z7zEJBwn9TLwYVcAlnH9FzGOs1N3DAtq21ONef20FQLSCY/29MibJ
   PHX_HOST: "{{ ansible_facts.hostname }}.localdomain"
+  WORKER: "{{ elixir_app_worker | default(true) }}"
 
 # Directory mirrored from one node to all others by `just mirror`. Files absent on
 # the source node are deleted elsewhere. The source node gets an SSH key for this.
