@@ -2,8 +2,10 @@
 
 Install a fixed-duty-cycle fan service on the Pi with physical controller access.
 Gather facts and use sudo. Requires systemd and a Debian-family OS providing a
-compatible implementation of the RPi.GPIO API. Confirm the GPIO backend supports
-your Pi model; the default `python3-rpi.gpio` package is not a universal Pi 5 backend.
+compatible implementation of the RPi.GPIO API. The default `python3-rpi-lgpio` package
+provides that API on top of lgpio and works on Pi 4 and Pi 5 family boards, including
+the Compute Module 5. The legacy `python3-rpi.gpio` package is removed because it cannot
+find the GPIO registers on Pi 5 hardware; keep it in `fan_controller_packages` to retain it.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -12,7 +14,7 @@ your Pi model; the default `python3-rpi.gpio` package is not a universal Pi 5 ba
 | `fan_controller_speed` | `100.0` | PWM duty cycle, 0–100 percent. |
 | `fan_controller_gpio_pin` | `13` | BCM GPIO number. |
 | `fan_controller_pwm_frequency` | `50` | PWM frequency in Hz. |
-| `fan_controller_packages` | `[python3, python3-rpi.gpio]` | Runtime and GPIO dependency packages. |
+| `fan_controller_packages` | `[python3, python3-rpi-lgpio]` | Runtime and GPIO dependency packages. |
 
 The role installs the dependencies, validates settings, and enables
 `fan-control.service`. Script or unit changes trigger a systemd reload and service

@@ -12,6 +12,12 @@
       - "fan_controller_script_name is match('^[A-Za-z0-9_-]+[.]py$')"
     fail_msg: Check the Debian host, absolute script path, speed (0-100), BCM pin (0-27), and positive PWM frequency.
 
+- name: Remove the legacy RPi.GPIO package, which cannot drive GPIO on Pi 5 boards
+  ansible.builtin.apt:
+    name: python3-rpi.gpio
+    state: absent
+  when: "'python3-rpi.gpio' not in fan_controller_packages"
+
 - name: Install fan controller dependencies
   ansible.builtin.apt:
     name: "{{ fan_controller_packages }}"

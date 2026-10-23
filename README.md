@@ -11,7 +11,7 @@ in the inventory. The only groups are `nodes` and `fan_controller`.
 - DNS or SSH configuration resolving `nc1.localdomain` through `nc6.localdomain`.
 - Internet access for apt packages, Go, and asdf/plugins/runtimes.
 - Fan hardware compatible with the RPi.GPIO API on Pi 1. The default package is
-  `python3-rpi.gpio`; confirm compatibility with your Pi model and OS image.
+  `python3-rpi-lgpio`, which works on Pi 4 and Pi 5 family boards including the CM5.
 
 Install the Go role and SSH-key collection dependencies on the controller:
 
