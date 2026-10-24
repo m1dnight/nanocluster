@@ -1,6 +1,6 @@
 ---
 - name: Run a local Bash script on all nodes
-  hosts: nanocluster1
+  hosts: all
   become: true
   gather_facts: false
   vars:

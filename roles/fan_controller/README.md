@@ -13,7 +13,7 @@ find the GPIO registers on Pi 5 hardware; keep it in `fan_controller_packages` t
 | `fan_controller_script_name` | `fan.py` | Script filename. |
 | `fan_controller_speed` | `100.0` | PWM duty cycle, 0–100 percent. |
 | `fan_controller_gpio_pin` | `13` | BCM GPIO number. |
-| `fan_controller_pwm_frequency` | `50` | PWM frequency in Hz. |
+| `fan_controller_pwm_frequency` | `10000` | PWM frequency in Hz. |
 | `fan_controller_packages` | `[python3, python3-rpi-lgpio]` | Runtime and GPIO dependency packages. |
 
 The role installs the dependencies, validates settings, and enables
@@ -21,6 +21,9 @@ The role installs the dependencies, validates settings, and enables
 restart. The script logs the actual configured percentage and releases GPIO on
 SIGINT, SIGTERM, or an exception. Systemd retries failures after five seconds.
 
-The controller maintains a fixed speed; it does not read temperatures. Pin and
-frequency defaults preserve the original wiring assumptions. Zero duty cycle
+The controller maintains a fixed speed; it does not read temperatures. The pin default
+matches the NanoCluster fan MOSFET on slot 1. The frequency default is 10 kHz, the
+highest lgpio supports: at the 50 Hz used in Sipeed's examples the stock 2-pin fan
+stalls at any duty cycle below 100%, and above 10 kHz lgpio silently stops driving the pin.
+Zero duty cycle
 stops PWM drive. Check actual cooling on the hardware after changing settings.
